@@ -1,95 +1,129 @@
+#include <B31DGMonitor.h>
+
 /*
  * Name: Rowan Maxwell
  * H No.: H00346635
  * Class: B31DG
- * Title: Assignment 2 - Cyclic & RTOS Monitoring
- * Date: 06/03/2025
+ * Title: Assignment 2 - Cyclic Monitoring
+ * Date Created: 06/03/2025
  * Description: This is the cyclic program for assignment 2 of the B31DG
  *              embedded software class at Heriot Watt University
 */
 
-/* Pin Definitions */
+/////////////////////////////////////
+/// Variable and Pin Declarations ///
+/////////////////////////////////////
 
-#define GREENLED 19
-#define REDLED 21
-#define PB1 15
-#define PB2 23
+/* Monitor Library Declaration */
+B31DGCyclicExecutiveMonitor monitor;
+
+/* Pin Definitions */
+#define GREENLED 19 // Green LED PIN
+#define REDLED 21 // Red LED PIN
+#define PB1 15 // Pushbutton 1 PIN
+#define PB2 23 // Pushbutton 2 PIN
 #define F1 5 // Frequency signal 1 input pin
 #define F2 17 // Frequency signal 2 input pin
 
+/* Delay Values */
 const uint delay50 = 50;   // 50 microsecond delay
 const uint delay100 = 100; // 100 microsecond delay
 const uint delay200 = 200; // 200 microsecond delay
 const uint delay250 = 250; // 250 microsecond delay
 const uint delay300 = 300; // 300 microsecond delay
 
-int timer;
-int TimeTaken;
-bool bruh = true;
 
-
+/////////////////////////////////////
+////////// Set Up Function //////////
+/////////////////////////////////////
 
 void setup() 
 {
   // Outputs
-  pinMode(GREENLED, OUTPUT);
-  pinMode(REDLED, OUTPUT);
+  pinMode(GREENLED, OUTPUT); // Set green LED as output
+  pinMode(REDLED, OUTPUT); // Set red LED as output
 
   // Inputs
-  pinMode(PB1, INPUT);
-  pinMode(PB2, INPUT);
-  pinMode(F1, INPUT);
-  pinMode(F2, INPUT);
+  pinMode(PB1, INPUT); // Set pushbutton 1 as input
+  pinMode(PB2, INPUT); // Set pushbutton 2 as input
+  pinMode(F1, INPUT); // Set frequency signal 1 as input
+  pinMode(F2, INPUT); // Set frequency signal 2 as input
 
-  Serial.begin(9600);
+  monitor.startMonitoring(); // Start the monitoring function
 }
+
+/////////////////////////////////////
+/////////// Loop Function ///////////
+/////////////////////////////////////
 
 void loop() 
 {
-  unsigned long frameTime = 0;
-  unsigned long frameCounter = 0;
-  if (bruh)
-  {
-    timer = micros();
-    ReadSignal_2();
-    TimeTaken = micros() - timer;
-    Serial.print("time taken = "); Serial.println(TimeTaken);
-    Serial.print("F2 = "); Serial.println(digitalRead(F2));
-    bruh = false;
-  }
+  unsigned long frameTime = 0; // Get the time of the frame
+  unsigned long frameCounter = 0; // Count the number of frames incremented
 }
 
+/////////////////////////////////////
+///// Digital Signal 1 Function /////
+/////////////////////////////////////
 
+/* Start Digital Signal 2 Output Function */
 void DigitalSignal_1()
 {
   // runs for 614us
-  digitalWrite(GREENLED, HIGH);
-  delayMicroseconds(delay250);
-  digitalWrite(GREENLED, LOW);
-  delayMicroseconds(delay50);
-  digitalWrite(GREENLED, HIGH);
-  delayMicroseconds(delay300);
+  monitor.jobStarted(1); // Start task 1 monitor
+  digitalWrite(GREENLED, HIGH); // Green LED ON
+  delayMicroseconds(delay250); // Keep on for 250us
+  digitalWrite(GREENLED, LOW); // Green LED OFF
+  delayMicroseconds(delay50); // keep off for 50us
+  digitalWrite(GREENLED, HIGH); // Green LED ON
+  delayMicroseconds(delay300); // Keep on for 300us
+  monitor.jobEnded(1); // End task 1 monitor
 }
+/* End Digital Signal 1 Output Function */
 
+/////////////////////////////////////
+///// Digital Signal 2 Function /////
+/////////////////////////////////////
+
+/* Start Digital Signal 2 Output Function */
 void DigitalSignal_2()
 {
   // runs for 362us
-  digitalWrite(GREENLED, HIGH); // Turn on green LED
-  delayMicroseconds(delay100); // Delay for 100 microseconds
-  digitalWrite(GREENLED, LOW); // Turn off green LED
-  delayMicroseconds(delay50); // Delay 50 microseconds
-  digitalWrite(GREENLED, HIGH); // Turn on green LED
-  delayMicroseconds(delay200); // delay 200 microseconds
+  monitor.jobStarted(2); // Start task 2 monitor 
+  digitalWrite(GREENLED, HIGH); // Green LED ON
+  delayMicroseconds(delay100); // Keep on for 100us
+  digitalWrite(GREENLED, LOW); // Green LED OFF
+  delayMicroseconds(delay50); // Keep off for 50us
+  digitalWrite(GREENLED, HIGH); // Green LED ON
+  delayMicroseconds(delay200); // Keep on for200us#
+  monitor.jobEnded(2); // End task 2 monitor
 }
+/* End Digital Signal 2 Output Function */
 
+//////////////////////////////////////
+// Frequency Signal 1 Read Function //
+//////////////////////////////////////
+
+/* Start F1 Read Function */
 void ReadSignal_1()
 {
   // runs for 6us
-  digitalRead(F1); // Read F1
+  monitor.jobStarted(3); // Start task 3 monitor
+  digitalRead(F1); // Read F1 Pin
+  monitor.jobEnded(3); // End task 3 monitor
 }
+/* End F1 Read Function */
 
+//////////////////////////////////////
+// Frequency Signal 2 Read Function //
+//////////////////////////////////////
+
+/* Start F2 Read Function */
 void ReadSignal_2()
 {
   // runs for 6us
-  digitalRead(F2); // Read F2
+  monitor.jobStarted(4); // Start task 4 monitor
+  digitalRead(F2); // Read F2 Pin
+  monitor.jobEnded(4); // End task 4 monitor
 }
+/* End F1 Read Function */
