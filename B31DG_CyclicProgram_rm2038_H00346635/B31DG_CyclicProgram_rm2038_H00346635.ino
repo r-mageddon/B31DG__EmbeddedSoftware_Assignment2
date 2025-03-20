@@ -29,8 +29,7 @@ void CallDoWork();
 #define GREENLED 19 // Green LED PIN
 #define REDLED 21 // Red LED PIN
 #define YELLOWLED 33 // Yellow LED Pin
-#define DoWorkReadButton 15 // Pushbutton 1 PIN
-#define PB2 23 // Pushbutton 2 PIN
+#define DoWorkReadButton 23 // Pushbutton to call task 6
 #define F1 5 // Frequency signal 1 input pin
 #define F2 17 // Frequency signal 2 input pin
 
@@ -85,23 +84,20 @@ void setup()
   pinMode(REDLED, OUTPUT); // Set red LED as output
 
   // Inputs
-  pinMode(DoWorkReadButton, INPUT); // Set pushbutton 1 as input
-  pinMode(PB2, INPUT); // Set pushbutton 2 as input
+  attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonInterrupt, HIGH); // Set ISR for doWorkButton press
   pinMode(F1, INPUT); // Set frequency signal 1 as input
   pinMode(F2, INPUT); // Set frequency signal 2 as input
 
   monitor.startMonitoring(); // Start the monitoring function
 
-  Serial.begin(300); // Start Serial monitor
+  Serial.begin(9600); // Start Serial monitor
 
   // Ticker Star//
-  /*
   timer1.attach(timer1Delay, DigitalSignal_1);
   timer2.attach(timer2Delay, DigitalSignal_2);
   timer3.attach(timer3Delay, ReadSignal_1);
   timer4.attach(timer4Delay, ReadSignal_2);
   timer5.attach(timer5Delay, CallDoWork);
-  */
 }
 
 /////////////////////////////////////
@@ -110,21 +106,11 @@ void setup()
 
 void loop() 
 {
-  bool doWorkButton = digitalRead(DoWorkReadButton);
   /* Write red LED high when combined signals are greater than 1500Hz */
   if (F1Freq + F2Freq > 1500)
   {
+    Serial.print("F total = "); Serial.println(F1Freq + F2Freq);
     digitalWrite(REDLED, HIGH);
-  }
-
-  if (doWorkButton == true)
-  {
-    delay(50);
-    Serial.print("doworkbutton = "); Serial.println(doWorkButton);
-    toggle = !toggle; // Change state of toggle
-    digitalWrite(YELLOWLED, toggle); // Acitvate/Deactivate LED depending on state of toggle
-    monitor.doWork(); // Call doWork()
-    Serial.println("Button push Dowork() finished"); // Show that doWork() is finished
   }
 }
 
@@ -220,6 +206,18 @@ void CallDoWork()
   monitor.jobEnded(5); // End task 5
 }
 /* End the DoWork function */
+
+//////////////////////////////////////
+///// Task 5 Interrupt Function //////
+//////////////////////////////////////
+void ButtonInterrupt()
+{
+  delay(50);
+  toggle = !toggle; // Change state of toggle
+  digitalWrite(YELLOWLED, toggle); // Acitvate/Deactivate LED depending on state of toggle
+  monitor.doWork(); // Call doWork()
+  Serial.println("Button push Dowork() finished"); // Show that doWork() is finished
+}
 
 //////////////////////////////////////
 ///////// Time Taken Code ////////
