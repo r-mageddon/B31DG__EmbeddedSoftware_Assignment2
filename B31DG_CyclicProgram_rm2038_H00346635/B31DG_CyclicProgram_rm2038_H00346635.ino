@@ -39,7 +39,7 @@ const uint delay100 = 100; // 100 microsecond delay
 const uint delay200 = 200; // 200 microsecond delay
 const uint delay250 = 250; // 250 microsecond delay
 const uint delay300 = 300; // 300 microsecond delay
-const uint tickerDelay = 4100; // "" millisecond delay
+const uint tickerDelay = 2000; // 2 millisecond delay
 
 /* Function call times */
 const uint DigitalSignal1 = 4;
@@ -58,11 +58,9 @@ int F2PulseLow = 0; // Value for LOW F2 square wave
 int F2Total = 0; // Value for period of F2 square wave
 int F2Freq = 0; // Value for frequency of F2 square wave
 
-/* Button Toggle State */
-bool toggle = false;
-
 /* Ticker Setup */
 Ticker tickerTimer; // Ticker for Task 1
+unsigned long frameCounter = 0;
 
 /////////////////////////////////////
 ////////// Set Up Function //////////
@@ -77,7 +75,6 @@ void setup()
 
   // Inputs
   attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonInterrupt, HIGH); // Set ISR for doWorkButton press
-  attachInterrupt(F1Freq + F2Freq > 1500, InterruptLED, HIGH);
   pinMode(F1, INPUT); // Set frequency signal 1 as input
   pinMode(F2, INPUT); // Set frequency signal 2 as input
 
@@ -95,25 +92,45 @@ void setup()
 
 void loop() 
 {
-  /* Write red LED high when combined signals are greater than 1500Hz
+  /* Write red LED high when combined signals are greater than 1500Hz */
   if (F1Freq + F2Freq > 1500)
   {
     Serial.print("F total = "); Serial.println(F1Freq + F2Freq);
     digitalWrite(REDLED, HIGH);
   }
-  */
 }
 
 void TickerTasks()
 {
-  int timer = millis();
-  DigitalSignal_1(); // Start Digital Signal 1
-  DigitalSignal_2(); // Start Digital Signal 2
-  ReadSignal_1(); // Start read frequency 1 signal
-  ReadSignal_2(); // Start Read frequency 2 signal
-  CallDoWork(); // Start doWork()
-  int timeTaken = millis() - timer;
-  Serial.print("Time Taken = "); Serial.println(timeTaken);
+  frameCounter++; // Increment frame counter
+  bool frameToggle = true; // Toggle to switch between signals called at framecounter % 2
+
+  int timer = millis(); // Start timer
+  /* Main Task Start */
+
+  if (frameCounter % 2 == 0) // if the frame counter is a multiple of 2
+  {
+    if (frameToggle == true) // Read one signal at frame counter multiple of 2
+    {
+      ReadSignal_1(); // Start read frequency 1 signal
+      frameToggle = false; // Switch to next signal at frameCounter % 2 == 0
+    }
+    else // Read other signal at frame counter multiple of 2
+    {
+      ReadSignal_2(); // Start Read frequency 2 signal
+      frameToggle = true; // Switch to previous signal at frameCounter % 2 == 0
+    }
+  }
+  else // every other frameCounter value read the other 3 signals
+  {
+    DigitalSignal_1(); // Start Digital Signal 1
+    DigitalSignal_2(); // Start Digital Signal 2
+    CallDoWork(); // Start doWork()
+  }
+
+  /* Main Task End */
+  int timeTaken = millis() - timer; // Get time taken
+  Serial.print("Time Taken = "); Serial.println(timeTaken); // Print time taken
 }
 
 /////////////////////////////////////
@@ -213,7 +230,7 @@ void ReadSignal_2()
 /* Start the DoWork function */
 void CallDoWork()
 {
-  // Runs for 1us
+  // Runs for 503us
   monitor.jobStarted(5); // Start task 5
   /* Main Task */
 
@@ -224,21 +241,10 @@ void CallDoWork()
 }
 /* End the DoWork function */
 
-//////////////////////////////////////
-///// Task 6 Interrupt Function //////
-//////////////////////////////////////
-void InterruptLED()
-{
-  Serial.print("F total = "); Serial.println(F1Freq + F2Freq);
-  digitalWrite(REDLED, HIGH);
-}
-//////////////////////////////////////
-///// Task 7 Interrupt Function //////
-//////////////////////////////////////
 void ButtonInterrupt()
 {
   delay(100); // Switch debounce
-  toggle = !toggle; // Change state of toggle
+  bool toggle = !toggle; // Change state of toggle
   digitalWrite(YELLOWLED, toggle); // Acitvate/Deactivate LED depending on state of toggle
   monitor.doWork(); // Call doWork()
   Serial.println("Button push Dowork() finished"); // Show that doWork() is finished
