@@ -2,14 +2,13 @@
  * Name: Rowan Maxwell
  * H No.: H00346635
  * Class: B31DG
- * Title: Assignment 2 - Cyclic Executive
- * Date Created: 06/03/2025
- * Description: This is the cyclic program for assignment 2 of the B31DG
- *              embedded software class at Heriot Watt University
+ * Title: Assignment 2 - FreeRTOS
+ * Date Created: 26/03/2025
+ * Description: This is the FreeRTOS program for assignment 2 of the 
+ *              B31DG embedded software class at Heriot Watt University
 */
 
 #include <B31DGMonitor.h>
-#include <Ticker.h>
 
 /////////////////////////////////////
 /// Variable and Pin Declarations ///
@@ -24,7 +23,6 @@ void DigitalSignal_2();
 void ReadSignal_1();
 void ReadSignal_2();
 void CallDoWork();
-void TickerTasks();
 
 /* Pin Definitions */
 #define GREENLED 19 // Green LED PIN
@@ -52,8 +50,7 @@ int F2PulseLow = 0; // Value for LOW F2 square wave
 int F2Total = 0; // Value for period of F2 square wave
 int F2Freq = 0; // Value for frequency of F2 square wave
 
-/* Ticker Setup */
-Ticker tickerTimer; // Ticker for Task 1
+/* FreeRtos Setup */
 unsigned long frameCounter = 0;
 bool frameToggle = true; // Toggle to switch between signals called at framecounter % 2
 
@@ -80,8 +77,13 @@ void setup()
 
   monitor.startMonitoring(); // Start the monitoring function
 
-  // Ticker Start //
-  tickerTimer.attach_ms(tickerDelay, TickerTasks);
+  // FreeRTOS Start //
+  xTaskCreate(DigitalSignal_1, "Digital Signal 1 Gen", 1000, NULL, 1, NULL);
+  xTaskCreate(DigitalSignal_2, "Digital Signal 2 Gen", 1000, NULL, 1, NULL);
+  xTaskCreate(ReadSignal_1, "Read Frequency 1", 1000, NULL, 1, NULL);
+  xTaskCreate(ReadSignal_2, "Read Signal 2", 1000, NULL, 1, NULL);
+  xTaskCreate(CallDoWork, "CallDoWork()", 1000, NULL, 1, NULL);
+
 
   Serial.begin(9600);
 }
@@ -93,36 +95,6 @@ void setup()
 void loop() 
 {
 
-}
-
-/////////////////////////////////////
-////////// Ticker Function //////////
-/////////////////////////////////////
-void TickerTasks()
-{
-  frameCounter++; // Increment frame counter
-  /* Main Task Start */
-  if (frameCounter % 2 == 0) // if the frame counter is a multiple of 2
-  {
-    if (frameToggle == true) // Read one signal at frame counter multiple of 2
-    {
-      ReadSignal_1(); // Start read frequency 1 signal
-      frameToggle = false; // Switch to next signal at frameCounter % 2 == 0
-    }
-    else // Read other signal at frame counter multiple of 2
-    {
-      ReadSignal_2(); // Start Read frequency 2 signal
-      frameToggle = true; // Switch to previous signal at frameCounter % 2 == 0
-    }
-  }
-  else // every other frameCounter value read the other 3 signals
-  {
-    DigitalSignal_1(); // Start Digital Signal 1
-    DigitalSignal_2(); // Start Digital Signal 2
-    CallDoWork(); // Start doWork()
-  }
-  delay(100);
-  /* Main Task End */
 }
 
 /////////////////////////////////////
