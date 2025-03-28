@@ -34,19 +34,23 @@ void TickerTasks();
 #define F1 5 // Frequency signal 1 input pin
 #define F2 17 // Frequency signal 2 input pin
 
-/* Delay Values */
-const uint delay50 = 50;   // 50 microsecond delay
-const uint delay100 = 100; // 100 microsecond delay
-const uint delay200 = 200; // 200 microsecond delay
+/* Signal Delay Values */
+// Signal 1
 const uint delay250 = 250; // 250 microsecond delay
 const uint delay300 = 300; // 300 microsecond delay
-const uint tickerDelay = 2; // 2 millisecond delay
+// Signal 2
+const uint delay100 = 100; // 100 microsecond delay
+const uint delay200 = 200; // 200 microsecond delay
+// Both Signals
+const uint delay50 = 50;   // 50 microsecond delay
 
 /* Frequency Read Variables */
+// Frequency 1
 int F1PulseHigh = 0; // Value for high F1 square wave pulse
 int F1PulseLow = 0; // Value for LOW F1 square wave pulse
 int F1Total = 0; // Value for total period of F1 square wave
 int F1Freq = 0; // Frequency of F1 square wave
+// Frequency 2
 int F2PulseHigh = 0; // Value for HIGH F2 square wave
 int F2PulseLow = 0; // Value for LOW F2 square wave
 int F2Total = 0; // Value for period of F2 square wave
@@ -54,8 +58,9 @@ int F2Freq = 0; // Value for frequency of F2 square wave
 
 /* Ticker Setup */
 Ticker tickerTimer; // Ticker for Task 1
-unsigned long frameCounter = 0;
+unsigned long frameCounter = 0; // Frame counter
 bool frameToggle = true; // Toggle to switch between signals called at framecounter % 2
+const uint tickerDelay = 3; // 3ms delay
 
 /* Interrupt Setup */
 bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
@@ -82,6 +87,7 @@ void setup()
 
   // Ticker Start //
   tickerTimer.attach_ms(tickerDelay, TickerTasks);
+  TickerTasks();
 
   Serial.begin(9600);
 }
@@ -91,37 +97,66 @@ void setup()
 /////////////////////////////////////
 
 void loop() 
-{
-
-}
+{ }
 
 /////////////////////////////////////
 ////////// Ticker Function //////////
 /////////////////////////////////////
 void TickerTasks()
 {
-  frameCounter++; // Increment frame counter
+  int FrameSelect = frameCounter % 20;
+
   /* Main Task Start */
-  if (frameCounter % 2 == 0) // if the frame counter is a multiple of 2
+
+  switch (FrameSelect)
   {
-    if (frameToggle == true) // Read one signal at frame counter multiple of 2
-    {
-      ReadSignal_1(); // Start read frequency 1 signal
-      frameToggle = false; // Switch to next signal at frameCounter % 2 == 0
-    }
-    else // Read other signal at frame counter multiple of 2
-    {
-      ReadSignal_2(); // Start Read frequency 2 signal
-      frameToggle = true; // Switch to previous signal at frameCounter % 2 == 0
-    }
+    case 0:
+      DigitalSignal_1(); DigitalSignal_2(); break;
+    case 1:
+      DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+    case 2:
+      DigitalSignal_1(); DigitalSignal_2(); break;
+    case 3:
+      DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+    case 4:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break; 
+    case 5:
+      DigitalSignal_2(); CallDoWork(); break;
+    case 6:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
+    case 7:
+      DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+    case 8:
+      DigitalSignal_1(); DigitalSignal_2(); break;
+    case 9:
+      DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+    case 10:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break;
+    case 11:
+      DigitalSignal_2(); CallDoWork(); break;
+    case 12:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
+    case 13:
+      DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+    case 14:
+      DigitalSignal_1(); DigitalSignal_2(); break;
+    case 15:
+      DigitalSignal_2(); ReadSignal_1(); CallDoWork();  break;
+    case 16:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break;
+    case 17:
+      DigitalSignal_2(); CallDoWork(); break;
+    case 18:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
+    case 19:
+      DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+    case 20:
+      DigitalSignal_1(); DigitalSignal_2(); break;
+    default:
+      Serial.print("Default triggered");
   }
-  else // every other frameCounter value read the other 3 signals
-  {
-    DigitalSignal_1(); // Start Digital Signal 1
-    DigitalSignal_2(); // Start Digital Signal 2
-    CallDoWork(); // Start doWork()
-  }
-  delay(100);
+
+  frameCounter++;
   /* Main Task End */
 }
 
