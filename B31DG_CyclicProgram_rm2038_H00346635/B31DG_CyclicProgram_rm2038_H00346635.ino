@@ -18,13 +18,14 @@
 /* Monitor Library Declaration */
 B31DGCyclicExecutiveMonitor monitor;
 
-/* Function call */
+/* Function call
 void DigitalSignal_1();
 void DigitalSignal_2();
-void ReadSignal_1();
-void ReadSignal_2();
+int ReadSignal_1();
+int ReadSignal_2();
 void CallDoWork();
 void TickerTasks();
+*/
 
 /* Pin Definitions */
 #define GREENLED 19 // Green LED PIN
@@ -46,15 +47,15 @@ const uint delay50 = 50;   // 50 microsecond delay
 
 /* Frequency Read Variables */
 // Frequency 1
-int F1PulseHigh = 0; // Value for high F1 square wave pulse
-int F1PulseLow = 0; // Value for LOW F1 square wave pulse
-int F1Total = 0; // Value for total period of F1 square wave
-int F1Freq = 0; // Frequency of F1 square wave
+long F1PulseHIGH = 0; // Value for high F1 square wave pulse
+long F1PulseLOW = 0; // Value for LOW F1 square wave pulse
+long F1Total = 0; // Value for total period of F1 square wave
+long F1Freq = 0; // Frequency of F1 square wave
 // Frequency 2
-int F2PulseHigh = 0; // Value for HIGH F2 square wave
-int F2PulseLow = 0; // Value for LOW F2 square wave
-int F2Total = 0; // Value for period of F2 square wave
-int F2Freq = 0; // Value for frequency of F2 square wave
+long F2PulseHIGH = 0; // Value for HIGH F2 square wave
+long F2PulseLOW = 0; // Value for LOW F2 square wave
+long F2Total = 0; // Value for period of F2 square wave
+long F2Freq = 0; // Value for frequency of F2 square wave
 
 /* Ticker Setup */
 Ticker tickerTimer; // Ticker for Task 1
@@ -63,7 +64,7 @@ bool frameToggle = true; // Toggle to switch between signals called at framecoun
 const uint tickerDelay = 3; // 3ms delay
 
 /* Interrupt Setup */
-bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
+volatile bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
                            button press */
 
 /////////////////////////////////////
@@ -79,16 +80,18 @@ void setup()
 
   // Inputs
   attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonInterrupt, HIGH); // Set ISR for doWorkButton press
-  attachInterrupt(F1Freq + F2Freq > 1500, FrequencyInterrupt, true);
+  // attachInterrupt(f1Freq + f2Freq > 1500, FrequencyInterrupt, true);
   pinMode(F1, INPUT); // Set frequency signal 1 as input
   pinMode(F2, INPUT); // Set frequency signal 2 as input
 
-  monitor.startMonitoring(); // Start the monitoring function
+  // Start Monitor //
+  monitor.startMonitoring();
 
   // Ticker Start //
   tickerTimer.attach_ms(tickerDelay, TickerTasks);
   TickerTasks();
 
+  // Start Serial //
   Serial.begin(9600);
 }
 
@@ -97,21 +100,20 @@ void setup()
 /////////////////////////////////////
 
 void loop() 
-{ }
+{  }
 
 /////////////////////////////////////
 ////////// Ticker Function //////////
 /////////////////////////////////////
 void TickerTasks()
 {
-  int FrameSelect = frameCounter % 20;
-
+  unsigned long frameSelect = frameCounter % 20;
   /* Main Task Start */
 
-  switch (FrameSelect)
+  switch (frameSelect)
   {
     case 0:
-      DigitalSignal_1(); DigitalSignal_2(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
     case 1:
       DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
     case 2:
@@ -119,7 +121,7 @@ void TickerTasks()
     case 3:
       DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
     case 4:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break; 
+      DigitalSignal_2(); ReadSignal_2(); break; 
     case 5:
       DigitalSignal_2(); CallDoWork(); break;
     case 6:
@@ -150,12 +152,7 @@ void TickerTasks()
       DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
     case 19:
       DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
-    case 20:
-      DigitalSignal_1(); DigitalSignal_2(); break;
-    default:
-      Serial.print("Default triggered");
   }
-
   frameCounter++;
   /* Main Task End */
 }
@@ -218,10 +215,10 @@ void ReadSignal_1()
   /* Main Task Start */
 
   /* pulseIn() gets period of input signal */
-  F1PulseHigh = pulseIn(F1, HIGH); // Read F1 Pin when square wave is HIGH
-  F1PulseLow = pulseIn(F1, LOW); // Read F1 Pin when square wave in LOW
-  F1Total = F1PulseHigh + F1PulseLow; // Get full square wave signal period
-  F1Freq = 1/F1Total; // Get frequency of signal
+  F1PulseHIGH = pulseIn(F1, HIGH); // Read F1 Pin when square wave is HIGH
+  F1PulseLOW = pulseIn(F1, LOW);
+  F1Total = F1PulseHIGH + F1PulseLOW; // Get full square wave signal period
+  F1Freq = 1000000/F1Total; // Get frequency of signal
 
   /* Main Task End */
   monitor.jobEnded(3); // End task 3 monitor
@@ -240,10 +237,10 @@ void ReadSignal_2()
   /* Main Task Start */
 
   /* pulseIn() gets period of input signal */
-  F2PulseHigh = pulseIn(F2, HIGH); // Read F1 Pin when square wave is HIGH
-  F2PulseLow = pulseIn(F2, LOW); // Read F1 Pin when square wave in LOW
-  F2Total = F2PulseHigh + F2PulseLow; // Get full square wave signal period
-  F2Freq = 1/F2Total; // Get frequency of signal
+  F2PulseHIGH = pulseIn(F2, HIGH); // Read F1 Pin when square wave is HIGH
+  F2PulseLOW = pulseIn(F2, LOW);
+  F2Total = F2PulseHIGH + F2PulseLOW; // Get full square wave signal period
+  F2Freq = 1000000/F2Total; // Get frequency of signal
 
   /* Main Task End */
   monitor.jobEnded(4); // End task 4 monitor

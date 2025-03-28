@@ -15,7 +15,7 @@
 /////////////////////////////////////
 
 /* Monitor Library Declaration */
-B31DGCyclicExecutiveMonitor monitor(1500);
+B31DGCyclicExecutiveMonitor monitor(30000);
 
 /* Function call */
 void DigitalSignal_1();
@@ -23,6 +23,8 @@ void DigitalSignal_2();
 void ReadSignal_1();
 void ReadSignal_2();
 void CallDoWork();
+void ButtonInterrupt();
+void FrequencyInterrupt();
 
 /* Pin Definitions */
 #define GREENLED 19 // Green LED PIN
@@ -33,11 +35,11 @@ void CallDoWork();
 #define F2 17 // Frequency signal 2 input pin
 
 /* Signal Periods */
-const uint Task1Perdod = 4000;
-const uint Task2Period = 3000;
-const uint Task3Period = 10000;
-const uint Task4Period = 10000;
-const uint Task5Period = 5000;
+const uint task1Period = 4000;
+const uint task2Period = 3000;
+const uint task3Period = 10000;
+const uint task4Period = 10000;
+const uint task5Period = 5000;
 
 /* Delay Values */
 const uint delay50 = 50;   // 50 microsecond delay
@@ -58,7 +60,8 @@ int F2Total = 0; // Value for period of F2 square wave
 int F2Freq = 0; // Value for frequency of F2 square wave
 
 /* FreeRtos Setup */
-SemaphoreHandle_t mutex; // Create mutex
+SemaphoreHandle_t countingSemaphore; // Create mutex
+const int numTasks = 5;
 
 /* Interrupt Setup */
 bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
@@ -70,6 +73,8 @@ bool toggleLED = false; /* Starting toggleLED as false means LED will light up o
 
 void setup() 
 {
+  Serial.begin(9600);
+
   // Outputs
   pinMode(GREENLED, OUTPUT); // Set green LED as output
   pinMode(REDLED, OUTPUT); // Set red LED as output
@@ -83,8 +88,8 @@ void setup()
 
   monitor.startMonitoring(); // Start the monitoring function
 
-  // Create mutex
-  mutex = xSemaphoreCreateMutex();
+  // Create Counting Semaphore
+  countingSemaphore = xSemaphoreCreateCounting(numTasks,0);
 
   // FreeRTOS Start //
   xTaskCreate(DigitalSignal_1, "Digital Signal 1", 1000, NULL, 1, NULL);
@@ -93,7 +98,10 @@ void setup()
   xTaskCreate(ReadSignal_2, "Read Signal 2", 1000, NULL, 1, NULL);
   xTaskCreate(CallDoWork, "Call Do Work", 1000, NULL, 1, NULL);
 
-  Serial.begin(9600);
+  for (int decrementSemaphore = numTasks; decrementSemaphore >= 0; decrementSemaphore--)
+  {
+    xSemaphoreTake(countingSemaphore, portMAX_DELAY);
+  }
 }
 
 /////////////////////////////////////
@@ -101,7 +109,10 @@ void setup()
 /////////////////////////////////////
 
 void loop() 
-{ }
+{ 
+  // Allow tielding to other tasks
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+}
 
 /////////////////////////////////////
 ///// Digital Signal 1 Function /////
@@ -110,26 +121,26 @@ void loop()
 /* Start Digital Signal 2 Output Function */
 void DigitalSignal_1(void *pvParameters)
 {
+  (void) pvParameters;
   while (1)
   {
-    xSemaphoreTake(mutex, portMAX_DELAY)
-    // runs for 614us
-    monitor.jobStarted(1); // Start task 1 monitor
-    /* Main Task Start */
+      // runs for 614us
+      monitor.jobStarted(1); // Start task 1 monitor
+      /* Main Task Start */
 
-    digitalWrite(GREENLED, HIGH); // Green LED ON
-    delayMicroseconds(delay250); // Keep on for 250us
-    digitalWrite(GREENLED, LOW); // Green LED OFF
-    delayMicroseconds(delay50); // keep off for 50us
-    digitalWrite(GREENLED, HIGH); // Green LED ON
-    delayMicroseconds(delay300); // Keep on for 300us
+      digitalWrite(GREENLED, HIGH); // Green LED ON
+      delayMicroseconds(delay250); // Keep on for 250us
+      digitalWrite(GREENLED, LOW); // Green LED OFF
+      delayMicroseconds(delay50); // keep off for 50us
+      digitalWrite(GREENLED, HIGH); // Green LED ON
+      delayMicroseconds(delay300); // Keep on for 300us
 
-    /* Main Task End */
-    monitor.jobEnded(1); // End task 1 monitor
+      /* Main Task End */
+      monitor.jobEnded(1); // End task 1 monitor
 
-    /* Give mutex */
-    xSemaphoreGive(mutex);
-    vTaskDelay(pdMS_TO_TICKS(Task1Delay));
+      /* Give mutex */
+      xSemaphoreGive(countingSemaphore);
+      vTaskDelay(pdMS_TO_TICKS(task1Period));
   }
 }
 /* End Digital Signal 1 Output Function */
@@ -141,29 +152,26 @@ void DigitalSignal_1(void *pvParameters)
 /* Start Digital Signal 2 Output Function */
 void DigitalSignal_2(void *pvParameters)
 {
-  while (100)
+  (void) pvParameters;
+  while (1)
   {
-    /* Get Semaphore */
-    xSemaphoreTake(mutex, portMAX_DELAY);
 
-    // runs for 362us
-    monitor.jobStarted(2); // Start task 2 monitor 
-    /* Main Task Start */
+      // runs for 362us
+      monitor.jobStarted(2); // Start task 2 monitor 
+      /* Main Task Start */
 
-    digitalWrite(GREENLED, HIGH); // Green LED ON
-    delayMicroseconds(delay100); // Keep on for 100us
-    digitalWrite(GREENLED, LOW); // Green LED OFF
-    delayMicroseconds(delay50); // Keep off for 50us
-    digitalWrite(GREENLED, HIGH); // Green LED ON
-    delayMicroseconds(delay200); // Keep on for200us
+      digitalWrite(GREENLED, HIGH); // Green LED ON
+      delayMicroseconds(delay100); // Keep on for 100us
+      digitalWrite(GREENLED, LOW); // Green LED OFF
+      delayMicroseconds(delay50); // Keep off for 50us
+      digitalWrite(GREENLED, HIGH); // Green LED ON
+      delayMicroseconds(delay200); // Keep on for200us
 
-    /* Main Task End */
-    monitor.jobEnded(2); // End task 2 monitor
+      /* Main Task End */
+      monitor.jobEnded(2); // End task 2 monitor
 
-    /* Give Mutex */
-    xSemaphoreGive(mutex);
-    vTaskDelay(pdMS_TO_TICK(Task2Period));
-
+      /* Give Mutex */
+      vTaskDelay(pdMS_TO_TICKS(task2Period));
   }
 }
 /* End Digital Signal 2 Output Function */
@@ -175,27 +183,24 @@ void DigitalSignal_2(void *pvParameters)
 /* Start F1 Read Function */
 void ReadSignal_1(void *pvParameters)
 {
+  (void) pvParameters;
   while (1)
   {
-    /* Get Semaphore */
-    xSemaphoreTake(mutex, portMAX_DELAY);
+      // runs for 2ms
+      monitor.jobStarted(3); // Start task 3 monitor
+      /* Main Task Start */
 
-    // runs for 2ms
-    monitor.jobStarted(3); // Start task 3 monitor
-    /* Main Task Start */
+      /* pulseIn() gets period of input signal */
+      F1PulseHigh = pulseIn(F1, HIGH); // Read F1 Pin when square wave is HIGH
+      F1PulseLow = pulseIn(F1, LOW); // Read F1 Pin when square wave in LOW
+      F1Total = F1PulseHigh + F1PulseLow; // Get full square wave signal period
+      F1Freq = 1/F1Total; // Get frequency of signal
 
-    /* pulseIn() gets period of input signal */
-    F1PulseHigh = pulseIn(F1, HIGH); // Read F1 Pin when square wave is HIGH
-    F1PulseLow = pulseIn(F1, LOW); // Read F1 Pin when square wave in LOW
-    F1Total = F1PulseHigh + F1PulseLow; // Get full square wave signal period
-    F1Freq = 1/F1Total; // Get frequency of signal
+      /* Main Task End */
+      monitor.jobEnded(3); // End task 3 monitor
 
-    /* Main Task End */
-    monitor.jobEnded(3); // End task 3 monitor
-
-    /* Give Semaphore */
-    xSemaphoreGive(mutex);
-    vTaskDelay(pdMS_TO_DELAY(Task3Period));
+      /* Give Semaphore */
+      vTaskDelay(pdMS_TO_TICKS(task3Period));
   }
 }
 /* End F1 Read Function */
@@ -207,27 +212,25 @@ void ReadSignal_1(void *pvParameters)
 /* Start F2 Read Function */
 void ReadSignal_2(void *pvParameters)
 {
+  (void) pvParameters;
   while (1)
   {
-    /* Get Semaphore */
-    xSemaphoreTask(mutex, portMAX_DELAY);
+      // runs for 2ms
+      monitor.jobStarted(4); // Start task 4 monitor
+      /* Main Task Start */
 
-    // runs for 2ms
-    monitor.jobStarted(4); // Start task 4 monitor
-    /* Main Task Start */
+      /* pulseIn() gets period of input signal */
+      F2PulseHigh = pulseIn(F2, HIGH); // Read F1 Pin when square wave is HIGH
+      F2PulseLow = pulseIn(F2, LOW); // Read F1 Pin when square wave in LOW
+      F2Total = F2PulseHigh + F2PulseLow; // Get full square wave signal period
+      F2Freq = 1/F2Total; // Get frequency of signal
 
-    /* pulseIn() gets period of input signal */
-    F2PulseHigh = pulseIn(F2, HIGH); // Read F1 Pin when square wave is HIGH
-    F2PulseLow = pulseIn(F2, LOW); // Read F1 Pin when square wave in LOW
-    F2Total = F2PulseHigh + F2PulseLow; // Get full square wave signal period
-    F2Freq = 1/F2Total; // Get frequency of signal
+      /* Main Task End */
+      monitor.jobEnded(4); // End task 4 monitor
 
-    /* Main Task End */
-    monitor.jobEnded(4); // End task 4 monitor
-
-    /* Give Semaphore */
-    xSemaphoreGive(mutex);
-    vTaskDelay(pdMS_TO_TICK(Task4Delay));
+      /* Give Semaphore */
+      xSemaphoreGive(countingSemaphore);
+      vTaskDelay(pdMS_TO_TICKS(task4Period));
   }
 }
 /* End F1 Read Function */
@@ -239,23 +242,25 @@ void ReadSignal_2(void *pvParameters)
 /* Start the DoWork function */
 void CallDoWork(void *pvParameters)
 {
+  TickType_t xlastWakeTime;
+  const TickType_t xFrequency = 5;
+
   while (1)
   {
-    /* Get Semaphore */
-    xSemaphoreTake(mutex, portMAX_DELAY);
+    vTaskDelayUntil(&xlastWakeTime, xFrequency);
+      // Runs for 503us
+      monitor.jobStarted(5); // Start task 5
+      /* Main Task */
 
-    // Runs for 503us
-    monitor.jobStarted(5); // Start task 5
-    /* Main Task */
+      monitor.doWork(); // Call doWork()
+      
+      /* Main Task end */
+      monitor.jobEnded(5); // End task 5
 
-    monitor.doWork(); // Call doWork()
-    
-    /* Main Task end */
-    monitor.jobEnded(5); // End task 5
-
-    /* Give Semaphore */
-    xSemaphoreGive(mutex);
-    vTaskDelay(pdMS_TO_TICK(Task5Delay));
+      /* Give Semaphore 
+      xSemaphoreGive(countingSemaphore);
+      vTaskDelay(pdMS_TO_TICKS(task5Period));
+      */
   }
 }
 /* End the DoWork function */
