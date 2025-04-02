@@ -119,14 +119,13 @@ void setup()
 
 
   // FreeRTOS Task Create //
-  xTaskCreate(DigitalSignal_1, "DigitalSignal1", 2048, NULL, 2, &Task1);
-  xTaskCreate(DigitalSignal_2, "DigitalSignal2", 2048, NULL, 1, &Task2);
+  xTaskCreate(DigitalSignal_1, "DigitalSignal1", 1024, NULL, 2, &Task1);
+  xTaskCreate(DigitalSignal_2, "DigitalSignal2", 1024, NULL, 1, &Task2);
   xTaskCreate(ReadSignal_1, "ReadFrequency1", 2048, NULL, 1, &Task3);
   xTaskCreate(ReadSignal_2, "ReadSignal2", 2048, NULL, 1, &Task4);
-  xTaskCreate(CallDoWork, "CallDoWork", 2048, NULL, 1, &Task5);
+  xTaskCreate(CallDoWork, "CallDoWork", 1024, NULL, 1, &Task5);
   //xTaskCreate(ButtonDoWork, "Button", 1024, NULL, 1, &Task6);
-  xTaskCreate(Freq1Freq2, "Freq1Freq2", 1024, /*(void *) &taskparams*/ NULL, 1, &Task7);
-
+  xTaskCreate(Freq1Freq2, "Freq1Freq2", 512, /*(void *) &taskparams*/ NULL, 1, &Task7);
 
   /* B31DG Monitor */
 
