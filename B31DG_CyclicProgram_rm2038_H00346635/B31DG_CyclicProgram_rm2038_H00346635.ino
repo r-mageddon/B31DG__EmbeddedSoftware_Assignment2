@@ -18,14 +18,13 @@
 /* Monitor Library Declaration */
 B31DGCyclicExecutiveMonitor monitor;
 
-/* Function call
+/* Function call */
 void DigitalSignal_1();
 void DigitalSignal_2();
-int ReadSignal_1();
-int ReadSignal_2();
+void ReadSignal_1();
+void ReadSignal_2();
 void CallDoWork();
 void TickerTasks();
-*/
 
 /* Pin Definitions */
 #define GREENLED 19 // Green LED PIN
@@ -85,11 +84,11 @@ void setup()
   pinMode(F2, INPUT); // Set frequency signal 2 as input
 
   // Start Monitor //
-  monitor.startMonitoring();
+  //monitor.startMonitoring();
 
   // Ticker Start //
-  tickerTimer.attach_ms(tickerDelay, TickerTasks);
-  TickerTasks();
+  //tickerTimer.attach_ms(tickerDelay, TickerTasks);
+  //TickerTasks();
 
   // Start Serial //
   Serial.begin(9600);
@@ -100,7 +99,13 @@ void setup()
 /////////////////////////////////////
 
 void loop() 
-{  }
+{ 
+  long time = micros();
+  ReadSignal_1();
+  long timeTaken = micros() - time;
+  Serial.print("Time taken = "); Serial.println(timeTaken);
+ 
+}
 
 /////////////////////////////////////
 ////////// Ticker Function //////////
@@ -210,8 +215,8 @@ void DigitalSignal_2()
 /* Start F1 Read Function */
 void ReadSignal_1()
 {
-  // runs for 2ms
-  monitor.jobStarted(3); // Start task 3 monitor
+  // runs for 2.944ms
+  //monitor.jobStarted(3); // Start task 3 monitor
   /* Main Task Start */
 
   /* pulseIn() gets period of input signal */
@@ -221,7 +226,7 @@ void ReadSignal_1()
   F1Freq = 1000000/F1Total; // Get frequency of signal
 
   /* Main Task End */
-  monitor.jobEnded(3); // End task 3 monitor
+  //monitor.jobEnded(3); // End task 3 monitor
 }
 /* End F1 Read Function */
 
@@ -232,7 +237,7 @@ void ReadSignal_1()
 /* Start F2 Read Function */
 void ReadSignal_2()
 {
-  // runs for 2ms
+  // runs for 2.948ms
   monitor.jobStarted(4); // Start task 4 monitor
   /* Main Task Start */
 
