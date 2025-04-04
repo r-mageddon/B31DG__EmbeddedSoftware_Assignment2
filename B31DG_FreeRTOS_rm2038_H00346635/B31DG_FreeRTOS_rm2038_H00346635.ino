@@ -15,7 +15,7 @@
 /////////////////////////////////////
 
 /* Monitor Library Declaration */
-B31DGCyclicExecutiveMonitor monitor(2000);
+B31DGCyclicExecutiveMonitor monitor;
 
 /* Function call */
 void DigitalSignal_1(void *pvParameters);
@@ -23,7 +23,8 @@ void DigitalSignal_2(void *pvParameters);
 void ReadSignal_1(void *pvParameters);
 void ReadSignal_2(void *pvParameters);
 void CallDoWork(void *pvParameters);
-void ButtonDoWork();
+void ButtonDoWork(void *pvParameters);
+void IRAM_ATTR ButtonHandle();
 void Freq1Freq2(void *pvParameters);
 
 /* Pin Definitions */
@@ -35,11 +36,11 @@ void Freq1Freq2(void *pvParameters);
 #define F2 17 // Frequency signal 2 input pin
 
 /* Signal Periods */
-const uint task1Period = 3;
-const uint task2Period = 2;
-const uint task3Period = 9;
-const uint task4Period = 8;
-const uint task5Period = 4;
+const uint task1Period = 3; // Task 1 period for vTaskDelayUntil
+const uint task2Period = 2; // Task 2 period for vTaskDelayUntil
+const uint task3Period = 9; // Task 3 period for vTaskDelayUntil
+const uint task4Period = 8; // Task 4 period for vTaskDelayUntil
+const uint task5Period = 4; // Task 5 period for vTaskDelayUntil
 
 /* Delay Values */
 const uint delay50 = 50;   // 50 microsecond delay
@@ -63,7 +64,8 @@ float F2Freq; // Value for frequency of F2 square wave
 
 /* FreeRtos Setup */
 SemaphoreHandle_t xMutex; // Create mutex
-SemaphoreHandle_t xBinSem; // Create binary semaphore
+SemaphoreHandle_t xBinSem; // Create binary 
+SemaphoreHandle_t xButtonSem; // Create binary semaphore for button interrupt
 const int numTasks = 5; // Number of tasks for counting semaphore
 
 /* Task Handlers */
@@ -78,12 +80,7 @@ TaskHandle_t Task7; // Task 7 handle
 /* Button Interrupt Varaibles */
 bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
                           button press */
-
-/*
- * Place in ButtonDoWork function
-Interrupt Setup 
-bool toggleLED = false; 
-*/
+BaseType_t xHighPriorWake = pdFALSE;
 
 /////////////////////////////////////
 ////////// Set Up Function //////////
@@ -100,9 +97,9 @@ void setup()
   pinMode(YELLOWLED, OUTPUT); // Set yellow LED as output
 
   // Inputs //
+  attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonHandle, FALLING); // Button ISR
   pinMode(F1, INPUT); // Set frequency signal 1 as input
   pinMode(F2, INPUT); // Set frequency signal 2 as input
-  attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonDoWork, RISING); // Button ISR
 
   /* FreeRTOS */
 
@@ -111,14 +108,27 @@ void setup()
 
   // Create Binary Semaphore //
   xBinSem = xSemaphoreCreateBinary();
+  xButtonSem = xSemaphoreCreateBinary();
 
 
   // FreeRTOS Task Create //
+  /*
+   * esp32 board started messing up before I could change:
+   *
+   * -> Stack size: the minmium size I knew I could set was 2048 before
+   *                a stack watchdog error was shown, these would have been
+   *                tinkered with more given my board hasn't become corrupted
+   * -> Priorities: I had DigitalSignal_1() set to a priority of 2 which produced
+   *                no violations when running. For the same reason as the stack
+   *                size, the rest of the priorities would have been tinkered with
+   *                but the board was corrupted
+  */
   xTaskCreate(DigitalSignal_1, "DigitalSignal1", 2048, NULL, 2, &Task1);
   xTaskCreate(DigitalSignal_2, "DigitalSignal2", 2048, NULL, 1, &Task2);
   xTaskCreate(ReadSignal_1, "ReadFrequency1", 2048, NULL, 1, &Task3);
   xTaskCreate(ReadSignal_2, "ReadSignal2", 2048, NULL, 1, &Task4);
   xTaskCreate(CallDoWork, "CallDoWork", 2048, NULL, 1, &Task5);
+  xTaskCreate(ButtonDoWork, "Button Interrupt", 2048, NULL, 1, &Task6);
   xTaskCreate(Freq1Freq2, "Freq1Freq2", 2048, NULL, 1, &Task7);
 
   /* B31DG Monitor */
@@ -278,6 +288,7 @@ void ReadSignal_2(void *pvParameters)
       monitor.jobEnded(4); // End task 4 monitor
 
       /* Give Semaphore for Task 7 */
+      /* This was due to be changed before corrupted board */
       xSemaphoreGive(xBinSem);
 
       /* Give Mutex */
@@ -325,33 +336,57 @@ void CallDoWork(void *pvParameters)
 //////// Button Do Work Call /////////
 //////////////////////////////////////
 
-/* Monitor Pushbutton function for Yellow LED */
-void ButtonDoWork()
-{ 
-  delay(500); // Switch debounce
-  toggleLED = !toggleLED; // Change state of toggle
-  digitalWrite(YELLOWLED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
-  monitor.doWork(); // Call doWork()
+/* Start Push Button Function */
+void ButtonDoWork(void *pvParamters)
+{
+  while(1)
+  {
+    if (xSemaphoreTakeFromISR(xButtonSem, &xHighPriorWake) == pdTRUE)
+    {
+      toggleLED = !toggleLED; // Change state of toggle
+      digitalWrite(YELLOWLED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
+      monitor.doWork(); // Call doWork()
+      Serial.print("BUTTON PRESSED: Do Work Finished!");
+      vTaskDelay(50 / portTICK_PERIOD_MS); // Debounce
+    }
+  }
 }
+/* End Push Button Function */
+
+///////////////////////////////////
+///// Button Interrupt Handler ////
+///////////////////////////////////
+
+/* Start Interrupt Button Handler */
+void IRAM_ATTR ButtonHandle()
+{
+  xSemaphoreGiveFromISR(xButtonSem, &xHighPriorWake);
+  if (xHighPriorWake == pdFALSE)
+  {
+    portYIELD_FROM_ISR();
+  }
+}
+/* End Interrupt Push Button Handler */
 
 //////////////////////////////////////
 ////////// Frequency Task ////////////
 //////////////////////////////////////
 
-/* Frequency 1 and Frequency 2 comparison function */
+/* Start Frequency 1 and Frequency 2 comparison function */
 void Freq1Freq2(void *pvParameters)
 {
   while(1)
   {
-      xSemaphoreTake(xBinSem, portMAX_DELAY);
+    xSemaphoreTake(xBinSem, portMAX_DELAY);
 
-      if ((F1Freq + F2Freq) >= 1500)
-      {
-        digitalWrite(REDLED, HIGH);
-      }
-      else 
-      {
-        digitalWrite(REDLED, LOW);
-      }
+    if ((F1Freq + F2Freq) >= 1500)
+    {
+      digitalWrite(REDLED, HIGH);
     }
+    else 
+    {
+      digitalWrite(REDLED, LOW);
+    }
+  }
 }
+/* End Frequency 1 and Frequency 2 comparison function */

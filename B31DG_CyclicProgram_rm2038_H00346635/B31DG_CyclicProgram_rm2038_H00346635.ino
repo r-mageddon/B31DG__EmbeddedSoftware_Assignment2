@@ -62,7 +62,7 @@ long F2Freq = 0; // Value for frequency of F2 square wave
 Ticker tickerTimer; // Ticker for schedule
 unsigned long frameCounter = 0; // Frame counter
 bool frameToggle = true; // Toggle to switch between signals called at framecounter % 2
-const uint tickerDelay = 3; // 3ms delay
+const uint tickerDelay = 5; // 5ms delay
 
 /* Interrupt Setup */
 volatile bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
@@ -235,7 +235,7 @@ void ReadSignal_2()
   /* Main Task End */
   monitor.jobEnded(4); // End task 4 monitor
 
-  Freq1Freq2();
+  Freq1Freq2(); // activate frequency 1 and frequency 2 comparison
 
 }
 /* End F1 Read Function */
@@ -267,6 +267,7 @@ void ButtonDoWork()
   toggleLED = !toggleLED; // Change state of toggle
   digitalWrite(YELLOWLED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
   monitor.doWork(); // Call doWork()
+  Serial.print("Monitor do wrok complete"); // Show do work has been done
 }
 
 //////////////////////////////////////
