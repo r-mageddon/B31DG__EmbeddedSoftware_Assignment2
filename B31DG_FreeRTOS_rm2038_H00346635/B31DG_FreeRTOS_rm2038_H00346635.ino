@@ -28,19 +28,13 @@ void IRAM_ATTR ButtonHandle();
 void Freq1Freq2(void *pvParameters);
 
 /* Pin Definitions */
-#define GREENLED 19 // Green LED PIN
-#define REDLED 21 // Red LED PIN
-#define YELLOWLED 13 // Yellow LED Pin
-#define DoWorkReadButton 23 // Pushbutton to call task 6
+#define GREENLED 6 // Green LED PIN
+#define REDLED 7 // Red LED PIN
+#define YELLOWLED 0 // Yellow LED Pin
+#define ORANGELED 10 // Orange LED Pin
+#define DoWorkReadButton 3 // Pushbutton to call task 6
 #define F1 5 // Frequency signal 1 input pin
-#define F2 17 // Frequency signal 2 input pin
-
-/* Signal Periods */
-const uint task1Period = 3; // Task 1 period for vTaskDelayUntil
-const uint task2Period = 2; // Task 2 period for vTaskDelayUntil
-const uint task3Period = 9; // Task 3 period for vTaskDelayUntil
-const uint task4Period = 8; // Task 4 period for vTaskDelayUntil
-const uint task5Period = 4; // Task 5 period for vTaskDelayUntil
+#define F2 4 // Frequency signal 2 input pin
 
 /* Delay Values */
 const uint delay50 = 50;   // 50 microsecond delay
@@ -77,6 +71,32 @@ TaskHandle_t Task5; // Task 5 handle
 TaskHandle_t Task6; // Task 6 handle
 TaskHandle_t Task7; // Task 7 handle
 
+/* Task Periods */
+const uint task1Period = 4; // Task 1 period for vTaskDelayUntil
+const uint task2Period = 3; // Task 2 period for vTaskDelayUntil
+const uint task3Period = 10; // Task 3 period for vTaskDelayUntil
+const uint task4Period = 10; // Task 4 period for vTaskDelayUntil
+const uint task5Period = 5; // Task 5 period for vTaskDelayUntil
+
+/* Task Stack Sizes */
+int Task1Stack = 2048; // Task 1 stack size
+int Task2Stack = 2048; // Task 2 stack size
+int Task3Stack = 2048; // Task 3 stack size
+int Task4Stack = 2048; // Task 4 stack size
+int Task5Stack = 2048; // Task 5 stack size
+int Task6Stack = 2048; // Task 6 stack size
+int Task7Stack = 2048; // task 7 stack size
+
+/* Task Priorities */
+int Task1Priority = 2; // Task 1 priority
+int Task2Priority = 2; // Task 2 priority
+int Task3Priority = 2; // Task 3 priority
+int Task4Priority = 2; // Task 4 priority
+int Task5Priority = 2; // Task 5 priority
+int Task6Priority = 1; // Task 6 priority
+int Task7Priority = 3; // task 7 priority
+
+
 /* Button Interrupt Varaibles */
 bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
                           button press */
@@ -86,7 +106,7 @@ BaseType_t xHighPriorWake = pdFALSE;
 ////////// Set Up Function //////////
 /////////////////////////////////////
 
-void setup() 
+void setup()
 {
   // Begin Serial //
   Serial.begin(9600);
@@ -95,6 +115,7 @@ void setup()
   pinMode(GREENLED, OUTPUT); // Set green LED as output
   pinMode(REDLED, OUTPUT); // Set red LED as output
   pinMode(YELLOWLED, OUTPUT); // Set yellow LED as output
+  pinMode(ORANGELED, OUTPUT); // Set orange LED as output
 
   // Inputs //
   attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonHandle, FALLING); // Button ISR
@@ -123,13 +144,13 @@ void setup()
    *                size, the rest of the priorities would have been tinkered with
    *                but the board was corrupted
   */
-  xTaskCreate(DigitalSignal_1, "DigitalSignal1", 2048, NULL, 2, &Task1);
-  xTaskCreate(DigitalSignal_2, "DigitalSignal2", 2048, NULL, 1, &Task2);
-  xTaskCreate(ReadSignal_1, "ReadFrequency1", 2048, NULL, 1, &Task3);
-  xTaskCreate(ReadSignal_2, "ReadSignal2", 2048, NULL, 1, &Task4);
-  xTaskCreate(CallDoWork, "CallDoWork", 2048, NULL, 1, &Task5);
-  xTaskCreate(ButtonDoWork, "Button Interrupt", 2048, NULL, 1, &Task6);
-  xTaskCreate(Freq1Freq2, "Freq1Freq2", 2048, NULL, 1, &Task7);
+  xTaskCreate(DigitalSignal_1, "DigitalSignal1", Task1Stack, NULL, Task1Priority, &Task1);
+  xTaskCreate(DigitalSignal_2, "DigitalSignal2", Task2Stack, NULL, Task2Priority, &Task2);
+  xTaskCreate(ReadSignal_1, "ReadFrequency1", Task3Stack, NULL, Task3Priority, &Task3);
+  xTaskCreate(ReadSignal_2, "ReadSignal2", Task4Stack, NULL, Task4Priority, &Task4);
+  xTaskCreate(CallDoWork, "CallDoWork", Task5Stack, NULL, Task5Priority, &Task5);
+  xTaskCreate(ButtonDoWork, "ButtonInterrupt", Task6Stack, NULL, Task6Priority, &Task6);
+  xTaskCreate(Freq1Freq2, "Freq1Freq2", Task7Stack, NULL, Task7Priority, &Task7);
 
   /* B31DG Monitor */
 
@@ -170,14 +191,14 @@ void DigitalSignal_1(void *pvParameters)
       delayMicroseconds(delay50); // keep off for 50us
       digitalWrite(GREENLED, HIGH); // Green LED ON
       delayMicroseconds(delay300); // Keep on for 300us
-
-      /* Main Task End */
-      monitor.jobEnded(1); // End task 1 monitor
+      digitalWrite(GREENLED, LOW); // Turn off
 
       /* Give mutex */
       xSemaphoreGive(xMutex);
-    }
 
+      /* Main Task End */
+      monitor.jobEnded(1); // End task 1 monitor
+    }
     vTaskDelayUntil(&xTask1LastTick, xTask1Rate);
   }
 }
@@ -203,18 +224,19 @@ void DigitalSignal_2(void *pvParameters)
       monitor.jobStarted(2); // Start task 2 monitor 
       /* Main Task Start */
 
-      digitalWrite(GREENLED, HIGH); // Green LED ON
+      digitalWrite(YELLOWLED, HIGH); // Green LED ON
       delayMicroseconds(delay100); // Keep on for 100us
-      digitalWrite(GREENLED, LOW); // Green LED OFF
+      digitalWrite(YELLOWLED, LOW); // Green LED OFF
       delayMicroseconds(delay50); // Keep off for 50us
-      digitalWrite(GREENLED, HIGH); // Green LED ON
+      digitalWrite(YELLOWLED, HIGH); // Green LED ON
       delayMicroseconds(delay200); // Keep on for200us
-
-      /* Main Task End */
-      monitor.jobEnded(2); // End task 2 monitor
+      digitalWrite(YELLOWLED, LOW); // Turn off
 
       /* Give Mutex */
       xSemaphoreGive(xMutex);
+
+      /* Main Task End */
+      monitor.jobEnded(2); // End task 2 monitor
     }
     vTaskDelayUntil(&xTask2LastTick, xTask2Rate);
   }
@@ -247,11 +269,11 @@ void ReadSignal_1(void *pvParameters)
       F1Total = F1PulseHigh + F1PulseLow; // Get full square wave signal period
       F1Freq = 1000000/F1Total; // Get frequency of signal
 
-      /* Main Task End */
-      monitor.jobEnded(3); // End task 3 monitor
-
       /* Give Semaphore */
       xSemaphoreGive(xMutex);
+
+      /* Main Task End */
+      monitor.jobEnded(3); // End task 3 monitor
     }
     vTaskDelayUntil(&xTask3LastTick, xTask3Rate);
   }
@@ -284,15 +306,15 @@ void ReadSignal_2(void *pvParameters)
       F2Total = F2PulseHigh + F2PulseLow; // Get full square wave signal period
       F2Freq = 1000000/F2Total; // Get frequency of signal
 
-      /* Main Task End */
-      monitor.jobEnded(4); // End task 4 monitor
-
       /* Give Semaphore for Task 7 */
       /* This was due to be changed before corrupted board */
       xSemaphoreGive(xBinSem);
 
       /* Give Mutex */
       xSemaphoreGive(xMutex);
+
+      /* Main Task End */
+      monitor.jobEnded(4); // End task 4 monitor
     }
     vTaskDelayUntil(&xTask4LastTick, xTask4Rate);
   }
@@ -320,12 +342,12 @@ void CallDoWork(void *pvParameters)
       /* Main Task */
 
       monitor.doWork(); // Call doWork()
-      
-      /* Main Task end */
-      monitor.jobEnded(5); // End task 5
 
       /* Give Semaphore */
       xSemaphoreGive(xMutex);
+
+      /* Main Task end */
+      monitor.jobEnded(5); // End task 5
     }
     vTaskDelayUntil(&xTask5LastTick, xTask5Rate);
   }
@@ -344,7 +366,7 @@ void ButtonDoWork(void *pvParamters)
     if (xSemaphoreTakeFromISR(xButtonSem, &xHighPriorWake) == pdTRUE)
     {
       toggleLED = !toggleLED; // Change state of toggle
-      digitalWrite(YELLOWLED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
+      digitalWrite(ORANGELED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
       monitor.doWork(); // Call doWork()
       Serial.print("BUTTON PRESSED: Do Work Finished!");
       vTaskDelay(50 / portTICK_PERIOD_MS); // Debounce

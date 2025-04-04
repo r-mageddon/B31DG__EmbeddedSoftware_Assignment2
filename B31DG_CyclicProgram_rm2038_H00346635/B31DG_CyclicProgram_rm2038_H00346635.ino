@@ -1,3 +1,4 @@
+
 /*
  * Name: Rowan Maxwell
  * H No.: H00346635
@@ -29,12 +30,13 @@ void Freq1Freq2();
 void TickerTasks();
 
 /* Pin Definitions */
-#define GREENLED 19 // Green LED PIN
-#define REDLED 21 // Red LED PIN
-#define YELLOWLED 13 // Yellow LED Pin
-#define DoWorkReadButton 23 // Pushbutton to call task 6
+#define GREENLED 6 // Green LED PIN
+#define REDLED 7 // Red LED PIN
+#define YELLOWLED 0 // Yellow LED Pin
+#define ORANGELED 10 // Orange LED Pin
+#define DoWorkReadButton 3 // Pushbutton to call task 6
 #define F1 5 // Frequency signal 1 input pin
-#define F2 17 // Frequency signal 2 input pin
+#define F2 4 // Frequency signal 2 input pin
 
 /* Signal Delay Values */
 // Signal 1
@@ -81,9 +83,10 @@ void setup()
   pinMode(GREENLED, OUTPUT); // Set green LED as output
   pinMode(REDLED, OUTPUT); // Set red LED as output
   pinMode(YELLOWLED, OUTPUT); // Set yellow LED as output
+  pinMode(ORANGELED, OUTPUT); // Set orange LED as output
 
   // Inputs
-  attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonInterrupt, HIGH); // Set ISR for doWorkButton press
+  attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonDoWork, HIGH); // Set ISR for doWorkButton press
   pinMode(F1, INPUT); // Set frequency signal 1 as input
   pinMode(F2, INPUT); // Set frequency signal 2 as input
 
@@ -165,6 +168,7 @@ void DigitalSignal_1()
   delayMicroseconds(delay50); // keep off for 50us
   digitalWrite(GREENLED, HIGH); // Green LED ON
   delayMicroseconds(delay300); // Keep on for 300us
+  digitalWrite(GREENLED, LOW); // Turn off LED
 
   /* Main Task End */
   monitor.jobEnded(1); // End task 1 monitor
@@ -182,12 +186,13 @@ void DigitalSignal_2()
   monitor.jobStarted(2); // Start task 2 monitor 
   /* Main Task Start */
 
-  digitalWrite(GREENLED, HIGH); // Green LED ON
+  digitalWrite(YELLOWLED, HIGH); // Green LED ON
   delayMicroseconds(delay100); // Keep on for 100us
-  digitalWrite(GREENLED, LOW); // Green LED OFF
+  digitalWrite(YELLOWLED, LOW); // Green LED OFF
   delayMicroseconds(delay50); // Keep off for 50us
-  digitalWrite(GREENLED, HIGH); // Green LED ON
+  digitalWrite(YELLOWLED, HIGH); // Green LED ON
   delayMicroseconds(delay200); // Keep on for200us
+  digitalWrite(YELLOWLED, LOW); // Turn off LED
 
   /* Main Task End */
   monitor.jobEnded(2); // End task 2 monitor
@@ -265,9 +270,9 @@ void ButtonDoWork()
 {
   delay(500); // Switch debounce
   toggleLED = !toggleLED; // Change state of toggle
-  digitalWrite(YELLOWLED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
+  digitalWrite(ORANGELED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
   monitor.doWork(); // Call doWork()
-  Serial.print("Monitor do wrok complete"); // Show do work has been done
+  Serial.print("Monitor do work complete"); // Show do work has been done
 }
 
 //////////////////////////////////////
