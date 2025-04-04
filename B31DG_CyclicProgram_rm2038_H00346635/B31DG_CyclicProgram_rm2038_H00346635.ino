@@ -24,6 +24,8 @@ void DigitalSignal_2();
 void ReadSignal_1();
 void ReadSignal_2();
 void CallDoWork();
+void ButtonDoWork();
+void Freq1Freq2();
 void TickerTasks();
 
 /* Pin Definitions */
@@ -57,7 +59,7 @@ long F2Total = 0; // Value for period of F2 square wave
 long F2Freq = 0; // Value for frequency of F2 square wave
 
 /* Ticker Setup */
-Ticker tickerTimer; // Ticker for Task 1
+Ticker tickerTimer; // Ticker for schedule
 unsigned long frameCounter = 0; // Frame counter
 bool frameToggle = true; // Toggle to switch between signals called at framecounter % 2
 const uint tickerDelay = 3; // 3ms delay
@@ -72,6 +74,9 @@ volatile bool toggleLED = false; /* Starting toggleLED as false means LED will l
 
 void setup() 
 {
+  // Start Serial //
+  Serial.begin(9600);
+
   // Outputs
   pinMode(GREENLED, OUTPUT); // Set green LED as output
   pinMode(REDLED, OUTPUT); // Set red LED as output
@@ -79,19 +84,14 @@ void setup()
 
   // Inputs
   attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonInterrupt, HIGH); // Set ISR for doWorkButton press
-  // attachInterrupt(f1Freq + f2Freq > 1500, FrequencyInterrupt, true);
   pinMode(F1, INPUT); // Set frequency signal 1 as input
   pinMode(F2, INPUT); // Set frequency signal 2 as input
 
-  // Start Monitor //
-  //monitor.startMonitoring();
-
   // Ticker Start //
-  //tickerTimer.attach_ms(tickerDelay, TickerTasks);
-  //TickerTasks();
+  tickerTimer.attach_ms(tickerDelay, TickerTasks);
 
-  // Start Serial //
-  Serial.begin(9600);
+  // Start Monitor //
+  monitor.startMonitoring();
 }
 
 /////////////////////////////////////
@@ -100,10 +100,6 @@ void setup()
 
 void loop() 
 { 
-  long time = micros();
-  ReadSignal_1();
-  long timeTaken = micros() - time;
-  Serial.print("Time taken = "); Serial.println(timeTaken);
  
 }
 
@@ -112,53 +108,43 @@ void loop()
 /////////////////////////////////////
 void TickerTasks()
 {
-  unsigned long frameSelect = frameCounter % 20;
+  unsigned long frameSelect = frameCounter % 12; // Select frame based on scheduler
+
   /* Main Task Start */
 
   switch (frameSelect)
   {
     case 0:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
     case 1:
-      DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
     case 2:
-      DigitalSignal_1(); DigitalSignal_2(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
     case 3:
-      DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
     case 4:
-      DigitalSignal_2(); ReadSignal_2(); break; 
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
     case 5:
-      DigitalSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
     case 6:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
     case 7:
-      DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
     case 8:
-      DigitalSignal_1(); DigitalSignal_2(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
     case 9:
-      DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
     case 10:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
     case 11:
-      DigitalSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
     case 12:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
-    case 13:
-      DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
-    case 14:
-      DigitalSignal_1(); DigitalSignal_2(); break;
-    case 15:
-      DigitalSignal_2(); ReadSignal_1(); CallDoWork();  break;
-    case 16:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break;
-    case 17:
-      DigitalSignal_2(); CallDoWork(); break;
-    case 18:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
-    case 19:
-      DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
   }
+
+  // Increment Frame Counter
   frameCounter++;
+
   /* Main Task End */
 }
 
@@ -216,7 +202,7 @@ void DigitalSignal_2()
 void ReadSignal_1()
 {
   // runs for 2.944ms
-  //monitor.jobStarted(3); // Start task 3 monitor
+  monitor.jobStarted(3); // Start task 3 monitor
   /* Main Task Start */
 
   /* pulseIn() gets period of input signal */
@@ -226,7 +212,7 @@ void ReadSignal_1()
   F1Freq = 1000000/F1Total; // Get frequency of signal
 
   /* Main Task End */
-  //monitor.jobEnded(3); // End task 3 monitor
+  monitor.jobEnded(3); // End task 3 monitor
 }
 /* End F1 Read Function */
 
@@ -246,9 +232,11 @@ void ReadSignal_2()
   F2PulseLOW = pulseIn(F2, LOW);
   F2Total = F2PulseHIGH + F2PulseLOW; // Get full square wave signal period
   F2Freq = 1000000/F2Total; // Get frequency of signal
-
   /* Main Task End */
   monitor.jobEnded(4); // End task 4 monitor
+
+  Freq1Freq2();
+
 }
 /* End F1 Read Function */
 
@@ -273,7 +261,7 @@ void CallDoWork()
 //////////////////////////////////////
 /////// Button Interrupt ISR /////////
 //////////////////////////////////////
-void ButtonInterrupt()
+void ButtonDoWork()
 {
   delay(500); // Switch debounce
   toggleLED = !toggleLED; // Change state of toggle
@@ -284,7 +272,14 @@ void ButtonInterrupt()
 //////////////////////////////////////
 ///// Frequency Interrupt ISR ////////
 //////////////////////////////////////
-void FrequencyInterrupt()
+void Freq1Freq2()
 {
-  digitalWrite(REDLED, HIGH);
+  if ((F1Freq + F2Freq) >= 1500)
+  {
+    digitalWrite(REDLED, HIGH);
+  }
+  else 
+  {
+    digitalWrite(REDLED, LOW);
+  }
 }

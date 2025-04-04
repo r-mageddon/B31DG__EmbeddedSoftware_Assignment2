@@ -15,7 +15,7 @@
 /////////////////////////////////////
 
 /* Monitor Library Declaration */
-B31DGCyclicExecutiveMonitor monitor;
+B31DGCyclicExecutiveMonitor monitor(2000);
 
 /* Function call */
 void DigitalSignal_1(void *pvParameters);
@@ -24,7 +24,7 @@ void ReadSignal_1(void *pvParameters);
 void ReadSignal_2(void *pvParameters);
 void CallDoWork(void *pvParameters);
 void ButtonDoWork();
-void FrequencyInterrupt(void *pvParameters);
+void Freq1Freq2(void *pvParameters);
 
 /* Pin Definitions */
 #define GREENLED 19 // Green LED PIN
@@ -61,18 +61,12 @@ float F2PulseLow; // Value for LOW F2 square wave
 float F2Total; // Value for period of F2 square wave
 float F2Freq; // Value for frequency of F2 square wave
 
-typedef struct
-{
-  float f1;
-  float f2;
-} freqStruct;
-
 /* FreeRtos Setup */
 SemaphoreHandle_t xMutex; // Create mutex
 SemaphoreHandle_t xBinSem; // Create binary semaphore
 const int numTasks = 5; // Number of tasks for counting semaphore
 
-// Task Handlers
+/* Task Handlers */
 TaskHandle_t Task1; // Task 1 handle
 TaskHandle_t Task2; // Task 2 handle
 TaskHandle_t Task3; // Task 3 handle
@@ -80,6 +74,10 @@ TaskHandle_t Task4; // Task 4 handle
 TaskHandle_t Task5; // Task 5 handle
 TaskHandle_t Task6; // Task 6 handle
 TaskHandle_t Task7; // Task 7 handle
+
+/* Button Interrupt Varaibles */
+bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
+                          button press */
 
 /*
  * Place in ButtonDoWork function
@@ -95,19 +93,16 @@ void setup()
 {
   // Begin Serial //
   Serial.begin(9600);
-
+  
   // Outputs //
   pinMode(GREENLED, OUTPUT); // Set green LED as output
   pinMode(REDLED, OUTPUT); // Set red LED as output
   pinMode(YELLOWLED, OUTPUT); // Set yellow LED as output
 
   // Inputs //
-  attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonDoWork, HIGH); // Set ISR for doWorkButton press
-  //attachInterrupt(F1Freq + F2Freq > 1500, FrequencyInterrupt, true);
   pinMode(F1, INPUT); // Set frequency signal 1 as input
   pinMode(F2, INPUT); // Set frequency signal 2 as input
-
-  //freqStruct taskparams = {F1Freq, F2Freq};
+  attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonDoWork, RISING); // Button ISR
 
   /* FreeRTOS */
 
@@ -119,13 +114,12 @@ void setup()
 
 
   // FreeRTOS Task Create //
-  xTaskCreate(DigitalSignal_1, "DigitalSignal1", 1024, NULL, 2, &Task1);
-  xTaskCreate(DigitalSignal_2, "DigitalSignal2", 1024, NULL, 1, &Task2);
+  xTaskCreate(DigitalSignal_1, "DigitalSignal1", 2048, NULL, 2, &Task1);
+  xTaskCreate(DigitalSignal_2, "DigitalSignal2", 2048, NULL, 1, &Task2);
   xTaskCreate(ReadSignal_1, "ReadFrequency1", 2048, NULL, 1, &Task3);
   xTaskCreate(ReadSignal_2, "ReadSignal2", 2048, NULL, 1, &Task4);
-  xTaskCreate(CallDoWork, "CallDoWork", 1024, NULL, 1, &Task5);
-  //xTaskCreate(ButtonDoWork, "Button", 1024, NULL, 1, &Task6);
-  xTaskCreate(Freq1Freq2, "Freq1Freq2", 512, /*(void *) &taskparams*/ NULL, 1, &Task7);
+  xTaskCreate(CallDoWork, "CallDoWork", 2048, NULL, 1, &Task5);
+  xTaskCreate(Freq1Freq2, "Freq1Freq2", 2048, NULL, 1, &Task7);
 
   /* B31DG Monitor */
 
@@ -283,7 +277,7 @@ void ReadSignal_2(void *pvParameters)
       /* Main Task End */
       monitor.jobEnded(4); // End task 4 monitor
 
-      /* Give Binary Semaphore */
+      /* Give Semaphore for Task 7 */
       xSemaphoreGive(xBinSem);
 
       /* Give Mutex */
@@ -333,17 +327,11 @@ void CallDoWork(void *pvParameters)
 
 /* Monitor Pushbutton function for Yellow LED */
 void ButtonDoWork()
-{
-  bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
-                             button press */
-
-  while(1)
-  {
-      delay(500); // Switch debounce
-      toggleLED = !toggleLED; // Change state of toggle
-      digitalWrite(YELLOWLED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
-      monitor.doWork(); // Call doWork()
-  }
+{ 
+  delay(500); // Switch debounce
+  toggleLED = !toggleLED; // Change state of toggle
+  digitalWrite(YELLOWLED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
+  monitor.doWork(); // Call doWork()
 }
 
 //////////////////////////////////////
@@ -353,21 +341,17 @@ void ButtonDoWork()
 /* Frequency 1 and Frequency 2 comparison function */
 void Freq1Freq2(void *pvParameters)
 {
-  /*freqStruct *freparams = (freqStruct *)pvParameters;
-  float signalFreq1 = freparams->f1;
-  float signalFreq2 = freparams->f2;*/
-
   while(1)
   {
-    xSemaphoreTake(xBinSem, portMAX_DELAY);
-    if ((F1Freq + F2Freq) >= 1500)
-    {
-      digitalWrite(REDLED, HIGH);
-    }
-    else 
-    {
-      digitalWrite(REDLED, LOW);
-    }
-  }
-}
+      xSemaphoreTake(xBinSem, portMAX_DELAY);
 
+      if ((F1Freq + F2Freq) >= 1500)
+      {
+        digitalWrite(REDLED, HIGH);
+      }
+      else 
+      {
+        digitalWrite(REDLED, LOW);
+      }
+    }
+}
