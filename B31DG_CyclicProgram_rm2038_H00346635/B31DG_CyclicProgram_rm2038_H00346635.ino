@@ -30,41 +30,37 @@ void Freq1Freq2();
 void TickerTasks();
 
 /* Pin Definitions */
-#define GREENLED 6 // Green LED PIN
-#define REDLED 7 // Red LED PIN
-#define YELLOWLED 0 // Yellow LED Pin
-#define ORANGELED 10 // Orange LED Pin
+#define GREENLED 6         // Green LED PIN
+#define REDLED 7           // Red LED PIN
+#define YELLOWLED 0        // Yellow LED Pin
+#define ORANGELED 10       // Orange LED Pin
 #define DoWorkReadButton 3 // Pushbutton to call task 6
-#define F1 5 // Frequency signal 1 input pin
-#define F2 4 // Frequency signal 2 input pin
+#define F1 5               // Frequency signal 1 input pin
+#define F2 4               // Frequency signal 2 input pin
 
 /* Signal Delay Values */
-// Signal 1
-const uint delay250 = 250; // 250 microsecond delay
-const uint delay300 = 300; // 300 microsecond delay
-// Signal 2
-const uint delay100 = 100; // 100 microsecond delay
-const uint delay200 = 200; // 200 microsecond delay
+// Task 1 Signal
+#define delay250 250 // 250 microsecond delay
+#define delay300 300 // 300 microsecond delay
+// Task 2 Signal
+#define delay100 100 // 100 microsecond delay
+#define delay200 200 // 200 microsecond delay
 // Both Signals
-const uint delay50 = 50;   // 50 microsecond delay
+#define delay50 50   // 50 microsecond delay
 
 /* Frequency Read Variables */
-// Frequency 1
+// Task 3 Frequency
 long F1PulseHIGH = 0; // Value for high F1 square wave pulse
-long F1PulseLOW = 0; // Value for LOW F1 square wave pulse
-long F1Total = 0; // Value for total period of F1 square wave
-long F1Freq = 0; // Frequency of F1 square wave
-// Frequency 2
+long F1Freq = 0;      // Frequency of F1 square wave
+// Task 4 Frequency
 long F2PulseHIGH = 0; // Value for HIGH F2 square wave
-long F2PulseLOW = 0; // Value for LOW F2 square wave
-long F2Total = 0; // Value for period of F2 square wave
-long F2Freq = 0; // Value for frequency of F2 square wave
+long F2Freq = 0;      // Value for frequency of F2 square wave
 
 /* Ticker Setup */
-Ticker tickerTimer; // Ticker for schedule
+Ticker tickerTimer;             // Ticker for schedule
 unsigned long frameCounter = 0; // Frame counter
-bool frameToggle = true; // Toggle to switch between signals called at framecounter % 2
-const uint tickerDelay = 5; // 5ms delay
+bool frameToggle = true;        // Toggle to switch between signals called at framecounter % 2
+#define tickerDelay 2           // 2ms interrupt
 
 /* Interrupt Setup */
 volatile bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
@@ -80,15 +76,15 @@ void setup()
   Serial.begin(9600);
 
   // Outputs
-  pinMode(GREENLED, OUTPUT); // Set green LED as output
-  pinMode(REDLED, OUTPUT); // Set red LED as output
+  pinMode(GREENLED, OUTPUT);  // Set green LED as output
+  pinMode(REDLED, OUTPUT);    // Set red LED as output
   pinMode(YELLOWLED, OUTPUT); // Set yellow LED as output
   pinMode(ORANGELED, OUTPUT); // Set orange LED as output
 
   // Inputs
-  attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonDoWork, HIGH); // Set ISR for doWorkButton press
-  pinMode(F1, INPUT); // Set frequency signal 1 as input
-  pinMode(F2, INPUT); // Set frequency signal 2 as input
+  pinMode(DoWorkReadButton, INPUT); // Set push button as input
+  pinMode(F1, INPUT);               // Set frequency signal 1 as input
+  pinMode(F2, INPUT);               // Set frequency signal 2 as input
 
   // Ticker Start //
   tickerTimer.attach_ms(tickerDelay, TickerTasks);
@@ -102,60 +98,98 @@ void setup()
 /////////////////////////////////////
 
 void loop() 
-{ 
- 
-}
+{ }
 
 /////////////////////////////////////
 ////////// Ticker Function //////////
 /////////////////////////////////////
+
+/* Start Ticker Function */
 void TickerTasks()
 {
-  unsigned long frameSelect = frameCounter % 12; // Select frame based on scheduler
+  unsigned long frameSelect = frameCounter % 30; // Select frame based on frame count
 
   /* Main Task Start */
 
   switch (frameSelect)
   {
     case 0:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); CallDoWork(); break;
     case 1:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+      DigitalSignal_2(); ReadSignal_1(); break;
     case 2:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); CallDoWork(); break;
     case 3:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+      DigitalSignal_2(); ReadSignal_2(); break;   
     case 4:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); CallDoWork(); break;
     case 5:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+      CallDoWork(); break;
     case 6:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
     case 7:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+      DigitalSignal_2(); CallDoWork(); break;
     case 8:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); ReadSignal_2(); break;
     case 9:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+      DigitalSignal_2(); CallDoWork(); break;
     case 10:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); CallDoWork(); break;
     case 11:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); CallDoWork(); break;
+      ReadSignal_1(); ButtonDoWork(); break;
     case 12:
-      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); CallDoWork(); break;
+      DigitalSignal_1(); DigitalSignal_2(); CallDoWork(); break;
+    case 13:
+      DigitalSignal_2(); ReadSignal_2(); break;
+    case 14:
+      DigitalSignal_1(); CallDoWork(); break;
+    case 15:
+      DigitalSignal_2(); CallDoWork(); break;  
+    case 16:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_1(); break;
+    case 17:
+      CallDoWork(); break;
+    case 18:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break;
+    case 19:
+      DigitalSignal_2(); CallDoWork(); break;
+    case 20:
+      DigitalSignal_1(); CallDoWork(); break;
+    case 21:
+      DigitalSignal_2(); ReadSignal_1(); break;
+    case 22:
+      DigitalSignal_1(); DigitalSignal_2(); CallDoWork(); break;
+    case 23:
+      ReadSignal_2(); ButtonDoWork(); break;
+    case 24:
+      DigitalSignal_1(); DigitalSignal_2(); CallDoWork(); break;
+    case 25:
+      DigitalSignal_2(); CallDoWork(); break;
+    case 26:
+      DigitalSignal_1(); ReadSignal_1(); break;
+    case 27:
+      DigitalSignal_2(); CallDoWork(); break;
+    case 28:
+      DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break;
+    case 29:
+      CallDoWork(); break;
+    default:
+      Serial.println("SAFTEY CATCH");
   }
 
-  // Increment Frame Counter
-  frameCounter++;
+  Freq1Freq2(); // Call Task 7 at the end of the frame
+  
+  frameCounter++; // Increment Frame Counter
 
   /* Main Task End */
 }
+/* End Ticker Function */
 
-/////////////////////////////////////
-///// Digital Signal 1 Function /////
-/////////////////////////////////////
+//////////////////////////////////////
+/////////// Task 1 Function //////////
+//////////////////////////////////////
 
-/* Start Digital Signal 2 Output Function */
+/* Start Task 1 Function */
 void DigitalSignal_1()
 {
   // runs for 614us
@@ -173,17 +207,18 @@ void DigitalSignal_1()
   /* Main Task End */
   monitor.jobEnded(1); // End task 1 monitor
 }
-/* End Digital Signal 1 Output Function */
+/* End Task 1 Function */
 
-/////////////////////////////////////
-///// Digital Signal 2 Function /////
-/////////////////////////////////////
+//////////////////////////////////////
+/////////// Task 2 Function //////////
+//////////////////////////////////////
 
-/* Start Digital Signal 2 Output Function */
+/* Start Task 2 Function */
 void DigitalSignal_2()
 {
   // runs for 362us
   monitor.jobStarted(2); // Start task 2 monitor 
+
   /* Main Task Start */
 
   digitalWrite(YELLOWLED, HIGH); // Green LED ON
@@ -195,97 +230,115 @@ void DigitalSignal_2()
   digitalWrite(YELLOWLED, LOW); // Turn off LED
 
   /* Main Task End */
+
   monitor.jobEnded(2); // End task 2 monitor
 }
-/* End Digital Signal 2 Output Function */
+/* End Task 2 Function */
 
 //////////////////////////////////////
-// Frequency Signal 1 Read Function //
+/////////// Task 3 Function //////////
 //////////////////////////////////////
 
-/* Start F1 Read Function */
+/* Start Task 3 Function */
 void ReadSignal_1()
 {
   // runs for 2.944ms
   monitor.jobStarted(3); // Start task 3 monitor
+
   /* Main Task Start */
 
   /* pulseIn() gets period of input signal */
-  F1PulseHIGH = pulseIn(F1, HIGH); // Read F1 Pin when square wave is HIGH
-  F1PulseLOW = pulseIn(F1, LOW);
-  F1Total = F1PulseHIGH + F1PulseLOW; // Get full square wave signal period
-  F1Freq = 1000000/F1Total; // Get frequency of signal
+  F1PulseHIGH = pulseIn(F1, HIGH);  // Read F1 Pin when square wave is HIGH
+  F1Freq = 1000000/(F1PulseHigh*2); // Get frequency of signal
 
   /* Main Task End */
+
   monitor.jobEnded(3); // End task 3 monitor
 }
-/* End F1 Read Function */
+/* End Task 3 Function */
 
 //////////////////////////////////////
-// Frequency Signal 2 Read Function //
+/////////// Task 4 Function //////////
 //////////////////////////////////////
 
-/* Start F2 Read Function */
+/* Start Task 4 Function */
 void ReadSignal_2()
 {
   // runs for 2.948ms
   monitor.jobStarted(4); // Start task 4 monitor
+
   /* Main Task Start */
 
   /* pulseIn() gets period of input signal */
   F2PulseHIGH = pulseIn(F2, HIGH); // Read F1 Pin when square wave is HIGH
-  F2PulseLOW = pulseIn(F2, LOW);
-  F2Total = F2PulseHIGH + F2PulseLOW; // Get full square wave signal period
-  F2Freq = 1000000/F2Total; // Get frequency of signal
+  F2Freq = 1000000/(F2Total*2);    // Get frequency of signal
+
   /* Main Task End */
+
   monitor.jobEnded(4); // End task 4 monitor
-
-  Freq1Freq2(); // activate frequency 1 and frequency 2 comparison
-
 }
-/* End F1 Read Function */
+/* End Task 4 Function */
 
 //////////////////////////////////////
-////////// DoWork Function ///////////
+////////// Task 5 Function ///////////
 //////////////////////////////////////
 
-/* Start the DoWork function */
+/* Start Task 5 function */
 void CallDoWork()
 {
   // Runs for 503us
-  monitor.jobStarted(5); // Start task 5
+  monitor.jobStarted(5); // Start task 5 monitor
+
   /* Main Task */
 
-  monitor.doWork(); // Call doWork()
+  monitor.doWork();      // Call doWork()
   
   /* Main Task end */
-  monitor.jobEnded(5); // End task 5
+
+  monitor.jobEnded(5);   // End task 5 monitor
 }
-/* End the DoWork function */
+/* End Task 5 function */
+
 
 //////////////////////////////////////
-/////// Button Interrupt ISR /////////
+////////// Task 6 Function ///////////
 //////////////////////////////////////
-void ButtonDoWork()
-{
-  delay(500); // Switch debounce
-  toggleLED = !toggleLED; // Change state of toggle
-  digitalWrite(ORANGELED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
-  monitor.doWork(); // Call doWork()
-  Serial.print("Monitor do work complete"); // Show do work has been done
-}
 
-//////////////////////////////////////
-///// Frequency Interrupt ISR ////////
-//////////////////////////////////////
+/* Start Task 6 Function */
 void Freq1Freq2()
 {
+  /* Main Task */
+
   if ((F1Freq + F2Freq) >= 1500)
   {
-    digitalWrite(REDLED, HIGH);
+    digitalWrite(REDLED, HIGH); // LED ON when sum is greater than 1500
   }
   else 
   {
-    digitalWrite(REDLED, LOW);
+    digitalWrite(REDLED, LOW); // LED OFF whne sum is less than 1500
   }
+
+  /* Main Task End */
 }
+/* End Task 6 Function */
+
+//////////////////////////////////////
+////////// Task 7 Function ///////////
+//////////////////////////////////////
+
+/* Start Task 7 Function */
+void ButtonDoWork()
+{
+  /* Main Task */
+
+  if (digitalRead(DoWorkReadButton) == HIGH)
+  {
+    toggleLED = !toggleLED;                              // Change state of toggle
+    digitalWrite(ORANGELED, toggleLED);                  // Acitvate/Deactivate LED depending on state of toggle
+    monitor.doWork();                                    // Call doWork()
+    Serial.println("BUTTON PRESSED: Do Work Finished!"); // Show do work has been done
+  }
+
+  /* Main Task End */
+}
+/* End Task 7 Function */
