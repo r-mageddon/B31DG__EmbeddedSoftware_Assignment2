@@ -73,7 +73,7 @@ volatile bool toggleLED = false; /* Starting toggleLED as false means LED will l
 void setup() 
 {
   // Start Serial //
-  Serial.begin(9600);
+  Serial.begin(19200);
 
   // Outputs
   pinMode(GREENLED, OUTPUT);  // Set green LED as output
@@ -98,7 +98,9 @@ void setup()
 /////////////////////////////////////
 
 void loop() 
-{ }
+{ 
+
+}
 
 /////////////////////////////////////
 ////////// Ticker Function //////////
@@ -160,7 +162,7 @@ void TickerTasks()
     case 22:
       DigitalSignal_1(); DigitalSignal_2(); CallDoWork(); break;
     case 23:
-      ReadSignal_2(); ButtonDoWork(); break;
+      ReadSignal_2(); break;
     case 24:
       DigitalSignal_1(); DigitalSignal_2(); CallDoWork(); break;
     case 25:
@@ -168,16 +170,16 @@ void TickerTasks()
     case 26:
       DigitalSignal_1(); ReadSignal_1(); break;
     case 27:
-      DigitalSignal_2(); CallDoWork(); break;
+      DigitalSignal_2(); break;
     case 28:
       DigitalSignal_1(); DigitalSignal_2(); ReadSignal_2(); break;
     case 29:
-      CallDoWork(); break;
+      ButtonDoWork(); Freq1Freq2(); break;
     default:
       Serial.println("SAFTEY CATCH");
   }
 
-  Freq1Freq2(); // Call Task 7 at the end of the frame
+  // Freq1Freq2(); // Call Task 7 at the end of the frame
   
   frameCounter++; // Increment Frame Counter
 
@@ -249,7 +251,7 @@ void ReadSignal_1()
 
   /* pulseIn() gets period of input signal */
   F1PulseHIGH = pulseIn(F1, HIGH);  // Read F1 Pin when square wave is HIGH
-  F1Freq = 1000000/(F1PulseHigh*2); // Get frequency of signal
+  F1Freq = 1000000/(F1PulseHIGH*2); // Get frequency of signal
 
   /* Main Task End */
 
@@ -271,7 +273,7 @@ void ReadSignal_2()
 
   /* pulseIn() gets period of input signal */
   F2PulseHIGH = pulseIn(F2, HIGH); // Read F1 Pin when square wave is HIGH
-  F2Freq = 1000000/(F2Total*2);    // Get frequency of signal
+  F2Freq = 1000000/(F2PulseHIGH*2);    // Get frequency of signal
 
   /* Main Task End */
 
