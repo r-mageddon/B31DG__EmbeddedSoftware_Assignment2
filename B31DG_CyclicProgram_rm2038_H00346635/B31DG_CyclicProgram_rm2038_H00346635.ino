@@ -30,41 +30,40 @@ void Freq1Freq2();
 void TickerTasks();
 
 /* Pin Definitions */
-#define GREENLED 6         // Green LED PIN
-#define REDLED 7           // Red LED PIN
-#define YELLOWLED 0        // Yellow LED Pin
-#define ORANGELED 10       // Orange LED Pin
-#define DoWorkReadButton 3 // Pushbutton to call task 6
-#define F1 5               // Frequency signal 1 input pin
-#define F2 4               // Frequency signal 2 input pin
+#define GREENLED 6               // Green LED PIN
+#define REDLED 7                 // Red LED PIN
+#define YELLOWLED 0              // Yellow LED Pin
+#define ORANGELED 10             // Orange LED Pin
+#define DoWorkReadButton 3       // Pushbutton to call task 6
+#define F1 5                     // Frequency signal 1 input pin
+#define F2 4                     // Frequency signal 2 input pin
 
 /* Signal Delay Values */
 // Task 1 Signal
-#define delay250 250 // 250 microsecond delay
-#define delay300 300 // 300 microsecond delay
+#define delay250 250             // 250 microsecond delay
+#define delay300 300             // 300 microsecond delay
 // Task 2 Signal
-#define delay100 100 // 100 microsecond delay
-#define delay200 200 // 200 microsecond delay
+#define delay100 100             // 100 microsecond delay
+#define delay200 200             // 200 microsecond delay
 // Both Signals
-#define delay50 50   // 50 microsecond delay
+#define delay50 50               // 50 microsecond delay
 
 /* Frequency Read Variables */
 // Task 3 Frequency
-long F1PulseHIGH = 0; // Value for high F1 square wave pulse
-long F1Freq = 0;      // Frequency of F1 square wave
+long F1PulseHIGH = 0;            // Value for high F1 square wave pulse
+long F1Freq = 0;                 // Frequency of F1 square wave
 // Task 4 Frequency
-long F2PulseHIGH = 0; // Value for HIGH F2 square wave
-long F2Freq = 0;      // Value for frequency of F2 square wave
+long F2PulseHIGH = 0;            // Value for HIGH F2 square wave
+long F2Freq = 0;                 // Value for frequency of F2 square wave
 
 /* Ticker Setup */
-Ticker tickerTimer;             // Ticker for schedule
-unsigned long frameCounter = 0; // Frame counter
-bool frameToggle = true;        // Toggle to switch between signals called at framecounter % 2
-#define tickerDelay 2           // 2ms interrupt
+Ticker tickerTimer;              // Ticker for schedule
+unsigned long frameCounter = 0;  // Frame counter
+bool frameToggle = true;         // Toggle to switch between signals called at framecounter % 2
+#define tickerDelay 2            // 2ms interrupt
 
 /* Interrupt Setup */
-volatile bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
-                           button press */
+volatile bool toggleLED = false; // Set toggle to false so first button press is true
 
 /////////////////////////////////////
 ////////// Set Up Function //////////
@@ -72,24 +71,25 @@ volatile bool toggleLED = false; /* Starting toggleLED as false means LED will l
 
 void setup() 
 {
+  /* Serial and Pin Setup */
   // Start Serial //
   Serial.begin(19200);
 
-  // Outputs
-  pinMode(GREENLED, OUTPUT);  // Set green LED as output
-  pinMode(REDLED, OUTPUT);    // Set red LED as output
-  pinMode(YELLOWLED, OUTPUT); // Set yellow LED as output
-  pinMode(ORANGELED, OUTPUT); // Set orange LED as output
+  // Outputs //
+  pinMode(GREENLED, OUTPUT);                       // Set green LED as output
+  pinMode(REDLED, OUTPUT);                         // Set red LED as output
+  pinMode(YELLOWLED, OUTPUT);                      // Set yellow LED as output
+  pinMode(ORANGELED, OUTPUT);                      // Set orange LED as output
 
-  // Inputs
-  pinMode(DoWorkReadButton, INPUT); // Set push button as input
-  pinMode(F1, INPUT);               // Set frequency signal 1 as input
-  pinMode(F2, INPUT);               // Set frequency signal 2 as input
+  // Inputs //
+  pinMode(DoWorkReadButton, INPUT);                // Set push button as input
+  pinMode(F1, INPUT);                              // Set frequency signal 1 as input
+  pinMode(F2, INPUT);                              // Set frequency signal 2 as input
 
-  // Ticker Start //
-  tickerTimer.attach_ms(tickerDelay, TickerTasks);
+  /* Ticker */
+  tickerTimer.attach_ms(tickerDelay, TickerTasks); // Start Ticker
 
-  // Start Monitor //
+  /* B31DG Monitor */
   monitor.startMonitoring();
 }
 
@@ -179,8 +179,6 @@ void TickerTasks()
       Serial.println("SAFTEY CATCH");
   }
 
-  // Freq1Freq2(); // Call Task 7 at the end of the frame
-  
   frameCounter++; // Increment Frame Counter
 
   /* Main Task End */
@@ -195,19 +193,21 @@ void TickerTasks()
 void DigitalSignal_1()
 {
   // runs for 614us
-  monitor.jobStarted(1); // Start task 1 monitor
+  monitor.jobStarted(1);        // Start task 1 monitor
+
   /* Main Task Start */
 
   digitalWrite(GREENLED, HIGH); // Green LED ON
-  delayMicroseconds(delay250); // Keep on for 250us
-  digitalWrite(GREENLED, LOW); // Green LED OFF
-  delayMicroseconds(delay50); // keep off for 50us
+  delayMicroseconds(delay250);  // Keep on for 250us
+  digitalWrite(GREENLED, LOW);  // Green LED OFF
+  delayMicroseconds(delay50);   // keep off for 50us
   digitalWrite(GREENLED, HIGH); // Green LED ON
-  delayMicroseconds(delay300); // Keep on for 300us
-  digitalWrite(GREENLED, LOW); // Turn off LED
+  delayMicroseconds(delay300);  // Keep on for 300us
+  digitalWrite(GREENLED, LOW);  // Turn off LED
 
   /* Main Task End */
-  monitor.jobEnded(1); // End task 1 monitor
+
+  monitor.jobEnded(1);          // End task 1 monitor
 }
 /* End Task 1 Function */
 
@@ -219,21 +219,21 @@ void DigitalSignal_1()
 void DigitalSignal_2()
 {
   // runs for 362us
-  monitor.jobStarted(2); // Start task 2 monitor 
+  monitor.jobStarted(2);         // Start task 2 monitor 
 
   /* Main Task Start */
 
   digitalWrite(YELLOWLED, HIGH); // Green LED ON
-  delayMicroseconds(delay100); // Keep on for 100us
-  digitalWrite(YELLOWLED, LOW); // Green LED OFF
-  delayMicroseconds(delay50); // Keep off for 50us
+  delayMicroseconds(delay100);   // Keep on for 100us
+  digitalWrite(YELLOWLED, LOW);  // Green LED OFF
+  delayMicroseconds(delay50);    // Keep off for 50us
   digitalWrite(YELLOWLED, HIGH); // Green LED ON
-  delayMicroseconds(delay200); // Keep on for200us
-  digitalWrite(YELLOWLED, LOW); // Turn off LED
+  delayMicroseconds(delay200);   // Keep on for200us
+  digitalWrite(YELLOWLED, LOW);  // Turn off LED
 
   /* Main Task End */
 
-  monitor.jobEnded(2); // End task 2 monitor
+  monitor.jobEnded(2);           // End task 2 monitor
 }
 /* End Task 2 Function */
 
@@ -245,17 +245,16 @@ void DigitalSignal_2()
 void ReadSignal_1()
 {
   // runs for 2.944ms
-  monitor.jobStarted(3); // Start task 3 monitor
+  monitor.jobStarted(3);            // Start task 3 monitor
 
   /* Main Task Start */
 
-  /* pulseIn() gets period of input signal */
   F1PulseHIGH = pulseIn(F1, HIGH);  // Read F1 Pin when square wave is HIGH
   F1Freq = 1000000/(F1PulseHIGH*2); // Get frequency of signal
 
   /* Main Task End */
 
-  monitor.jobEnded(3); // End task 3 monitor
+  monitor.jobEnded(3);              // End task 3 monitor
 }
 /* End Task 3 Function */
 
@@ -267,17 +266,16 @@ void ReadSignal_1()
 void ReadSignal_2()
 {
   // runs for 2.948ms
-  monitor.jobStarted(4); // Start task 4 monitor
+  monitor.jobStarted(4);               // Start task 4 monitor
 
   /* Main Task Start */
 
-  /* pulseIn() gets period of input signal */
-  F2PulseHIGH = pulseIn(F2, HIGH); // Read F1 Pin when square wave is HIGH
+  F2PulseHIGH = pulseIn(F2, HIGH);     // Read F1 Pin when square wave is HIGH
   F2Freq = 1000000/(F2PulseHIGH*2);    // Get frequency of signal
 
   /* Main Task End */
 
-  monitor.jobEnded(4); // End task 4 monitor
+  monitor.jobEnded(4);                 // End task 4 monitor
 }
 /* End Task 4 Function */
 
@@ -317,7 +315,7 @@ void Freq1Freq2()
   }
   else 
   {
-    digitalWrite(REDLED, LOW); // LED OFF whne sum is less than 1500
+    digitalWrite(REDLED, LOW);  // LED OFF when sum is less than 1500
   }
 
   /* Main Task End */

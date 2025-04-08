@@ -38,13 +38,13 @@ void Freq1Freq2(void *pvParameters);
 
 
 /* Pin Definitions */
-#define GREENLED 6 // Green LED PIN
-#define REDLED 7 // Red LED PIN
-#define YELLOWLED 0 // Yellow LED Pin
-#define ORANGELED 10 // Orange LED Pin
+#define GREENLED 6         // Green LED PIN
+#define REDLED 7           // Red LED PIN
+#define YELLOWLED 0        // Yellow LED Pin
+#define ORANGELED 10       // Orange LED Pin
 #define DoWorkReadButton 3 // Pushbutton to call task 6
-#define F1 5 // Frequency signal 1 input pin
-#define F2 4 // Frequency signal 2 input pin
+#define F1 5               // Frequency signal 1 input pin
+#define F2 4               // Frequency signal 2 input pin
 
 
 /* Delay Values */
@@ -61,10 +61,10 @@ void Freq1Freq2(void *pvParameters);
 /* Frequency Read Variables */
 // Frequency 1 //
 float F1PulseHIGH = 0;    // Value for high F1 square wave pulse
-float F1Freq = 0;       // Frequency of F1 square wave
+float F1Freq = 0;         // Frequency of F1 square wave
 // Frequency 2 //
 float F2PulseHIGH = 0;    // Value for HIGH F2 square wave
-float F2Freq = 0;      // Value for frequency of F2 square wave
+float F2Freq = 0;         // Value for frequency of F2 square wave
 
 
 /* FreeRtos Setup */
@@ -109,9 +109,8 @@ TaskHandle_t Task7; // Task 7 handle
 
 
 /* Button Interrupt Varaibles */
-bool toggleLED = false; /* Starting toggleLED as false means LED will light up on first
-                          button press */
-BaseType_t xHighPriorWake = pdFALSE;
+bool toggleLED = false;              // Set toggle to false so first button press is true
+BaseType_t xHighPriorWake = pdFALSE; // Set priority handle as false
 
 
 /////////////////////////////////////
@@ -120,6 +119,8 @@ BaseType_t xHighPriorWake = pdFALSE;
 
 void setup()
 {
+  /* Serial and Pin Setup */
+
   // Begin Serial //
   Serial.begin(19200);
 
@@ -133,6 +134,7 @@ void setup()
   pinMode(F1, INPUT);                                                               // Set frequency signal 1 as input
   pinMode(F2, INPUT);                                                               // Set frequency signal 2 as input
   attachInterrupt(digitalPinToInterrupt(DoWorkReadButton), ButtonHandle, FALLING);  // Button ISR
+
 
   /* FreeRTOS */
 
@@ -151,7 +153,9 @@ void setup()
   xTaskCreatePinnedToCore(Freq1Freq2, "Task6", xTask6Stack, NULL, xTask6Priority, &Task6, app_cpu);      // Create Task 6 on acceptible core
   xTaskCreatePinnedToCore(ButtonDoWork, "Task7", xTask7Stack, NULL, xTask7Priority, &Task7, app_cpu);    // Create Task 7 on acceptible core
 
+
   /* B31DG Monitor */
+
   monitor.startMonitoring();  // Start the B31DG Monitor
 }
 
@@ -223,21 +227,21 @@ void DigitalSignal_2(void *pvParameters)
     if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE)
     {
       // runs for 362us
-      monitor.jobStarted(2); // Start task 2 monitor 
+      monitor.jobStarted(2);         // Start task 2 monitor 
 
       /* Main Task Start */
 
       digitalWrite(YELLOWLED, HIGH); // Green LED ON
-      delayMicroseconds(delay100); // Keep on for 100us
-      digitalWrite(YELLOWLED, LOW); // Green LED OFF
-      delayMicroseconds(delay50); // Keep off for 50us
+      delayMicroseconds(delay100);   // Keep on for 100us
+      digitalWrite(YELLOWLED, LOW);  // Green LED OFF
+      delayMicroseconds(delay50);    // Keep off for 50us
       digitalWrite(YELLOWLED, HIGH); // Green LED ON
-      delayMicroseconds(delay200); // Keep on for200us
-      digitalWrite(YELLOWLED, LOW); // Turn off
+      delayMicroseconds(delay200);   // Keep on for200us
+      digitalWrite(YELLOWLED, LOW);  // Turn off
 
       /* Main Task End */
 
-      monitor.jobEnded(2); // End task 2 monitor
+      monitor.jobEnded(2);           // End task 2 monitor
 
       /* Give Mutex */
       xSemaphoreGive(xMutex);
@@ -266,13 +270,14 @@ void ReadSignal_1(void *pvParameters)
     {
       // runs for 2.944ms
       monitor.jobStarted(3);            // Start task 3 monitor
+
       /* Main Task Start */
 
-      /* pulseIn() gets period of input signal */
       F1PulseHIGH = pulseIn(F1, HIGH);  // Read F1 Pin when square wave is HIGH
       F1Freq = 1000000/(F1PulseHIGH*2); // Get frequency of signal
 
       /* Main Task End */
+
       monitor.jobEnded(3);              // End task 3 monitor
 
       /* Give Semaphore */
@@ -305,7 +310,6 @@ void ReadSignal_2(void *pvParameters)
 
       /* Main Task Start */
 
-      /* pulseIn() gets period of input signal */
       F2PulseHIGH = pulseIn(F2, HIGH);  // Read F1 Pin when square wave is HIGH
       F2Freq = 1000000/(F2PulseHIGH*2); // Get frequency of signal
 
@@ -366,27 +370,23 @@ void CallDoWork(void *pvParameters)
 /* Start Task 6 function */
 void Freq1Freq2(void *pvParameters)
 {
-  /*
-  TickType_t xTask6LastTick;                                // Set task 6 tick handle
-  const TickType_t xTask6Rate = pdMS_TO_TICKS(5); // Set tick rate of task 6 
-
-  xTask6LastTick = xTaskGetTickCount();                     // Get tick rate of task 6 call
-  */
   while(1)
   {
     if (xSemaphoreTake(xBinSem, portMAX_DELAY) == pdTRUE)
     {
+      /* Main Task */
 
       if ((F1Freq + F2Freq) >= 1500)
       {
-        digitalWrite(REDLED, HIGH); // If combined freuqencies greater than or equal to 1500 ACTIVATE red LED
+        digitalWrite(REDLED, HIGH); // LED ON when sum is greater than 1500
       }
       else 
       {
-        digitalWrite(REDLED, LOW); // If combined frequencies less than 1500 DEACTIVATE red LED
+        digitalWrite(REDLED, LOW);  // LED OFF when sum is less than 1500
       }
+
+      /* Main Task End */
     }    
-    // vTaskDelayUntil(&xTask6LastTick, xTask6Rate); // Wait tick rate from last tick call
   }
 }
 /* End Task 6 function */
@@ -403,10 +403,14 @@ void ButtonDoWork(void *pvParamters)
   {
     if (xSemaphoreTakeFromISR(xButtonSem, &xHighPriorWake) == pdTRUE)
     {
-      toggleLED = !toggleLED;             // Change state of toggle
-      digitalWrite(ORANGELED, toggleLED); // Acitvate/Deactivate LED depending on state of toggle
-      monitor.doWork();                   // Call doWork()
+      /* Main Task */
+
+      toggleLED = !toggleLED;                              // Change state of toggle
+      digitalWrite(ORANGELED, toggleLED);                  // Acitvate/Deactivate LED depending on state of toggle
+      monitor.doWork();                                    // Call doWork()
       Serial.println("BUTTON PRESSED: Do Work Finished!");
+
+      /* Main Task End */
     }
   }
 }
@@ -415,11 +419,11 @@ void ButtonDoWork(void *pvParamters)
 /* Start Task 7 Interrupt Handler */
 void IRAM_ATTR ButtonHandle()
 {
-  xSemaphoreGiveFromISR(xButtonSem, &xHighPriorWake);
+  xSemaphoreGiveFromISR(xButtonSem, &xHighPriorWake); // Give semaphore from interrupt
 
   if (xHighPriorWake == pdFALSE)
   {
-    portYIELD_FROM_ISR(); // If priority handle isn't given don't send semaphore
+    portYIELD_FROM_ISR();                             // If priority handle isn't given don't send semaphore
   }
 }
 /* End Task 7 Interrupt Handler */
