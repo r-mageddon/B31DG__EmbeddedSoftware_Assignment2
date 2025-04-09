@@ -27,14 +27,14 @@ static const BaseType_t app_cpu = 1;
 
 
 /* Function call */
-void DigitalSignal_1(void *pvParameters);
-void DigitalSignal_2(void *pvParameters);
-void ReadSignal_1(void *pvParameters);
-void ReadSignal_2(void *pvParameters);
-void CallDoWork(void *pvParameters);
-void ButtonDoWork(void *pvParameters);
-void IRAM_ATTR ButtonHandle();
-void Freq1Freq2(void *pvParameters);
+void DigitalSignal_1(void *pvParameters); // Task 1
+void DigitalSignal_2(void *pvParameters); // Task 2
+void ReadSignal_1(void *pvParameters);    // Task 3
+void ReadSignal_2(void *pvParameters);    // Task 4
+void CallDoWork(void *pvParameters);      // Task 5
+void Freq1Freq2(void *pvParameters);      // Task 6
+void ButtonDoWork(void *pvParameters);    // Task 7
+void IRAM_ATTR ButtonHandle();            // Task 7 Interrupt Handle
 
 
 /* Pin Definitions */
@@ -49,22 +49,22 @@ void Freq1Freq2(void *pvParameters);
 
 /* Delay Values */
 // Task 1 Delays //
-#define delay250 250   // 250 microsecond delay
-#define delay300 300   // 300 microsecond delay
+#define delay250 250       // 250 microsecond delay
+#define delay300 300       // 300 microsecond delay
 // Task 2 Delays //
-#define delay100 100   // 100 microsecond delay
-#define delay200 200   // 200 microsecond delay
+#define delay100 100       // 100 microsecond delay
+#define delay200 200       // 200 microsecond delay
 // Both Task Delays
-#define delay50  50    // 50 microsecond delay
+#define delay50  50        // 50 microsecond delay
 
 
 /* Frequency Read Variables */
 // Frequency 1 //
-float F1PulseHIGH = 0;    // Value for high F1 square wave pulse
-float F1Freq = 0;         // Frequency of F1 square wave
+float F1PulseHIGH = 0;         // Value for high F1 square wave pulse
+float F1Freq = 0;              // Frequency of F1 square wave
 // Frequency 2 //
-float F2PulseHIGH = 0;    // Value for HIGH F2 square wave
-float F2Freq = 0;         // Value for frequency of F2 square wave
+float F2PulseHIGH = 0;         // Value for HIGH F2 square wave
+float F2Freq = 0;              // Value for frequency of F2 square wave
 
 
 /* FreeRtos Setup */
@@ -83,11 +83,11 @@ TaskHandle_t Task6; // Task 6 handle
 TaskHandle_t Task7; // Task 7 handle
 
 // Task Periods //
-#define task1Period 4  // Set Period Task 1 is called
-#define task2Period 3  // Set Period Task 2 is called
-#define task3Period 10 // Set Period Task 3 is called
-#define task4Period 10 // Set Period Task 4 is called
-#define task5Period 5  // Set Period Task 5 is called
+#define task1Period 4    // Set Period Task 1 is called
+#define task2Period 3    // Set Period Task 2 is called
+#define task3Period 10   // Set Period Task 3 is called
+#define task4Period 10   // Set Period Task 4 is called
+#define task5Period 5    // Set Period Task 5 is called
 
 // Task Stack Sizes //
 #define xTask1Stack 2048 // Task 1 stack size
@@ -99,7 +99,7 @@ TaskHandle_t Task7; // Task 7 handle
 #define xTask7Stack 1024 // task 7 stack size
 
 // Task Priorities //
-#define xTask1Priority 2 // Task 1 priority
+#define xTask1Priority 3 // Task 1 priority
 #define xTask2Priority 2 // Task 2 priority
 #define xTask3Priority 3 // Task 3 priority
 #define xTask4Priority 3 // Task 4 priority
@@ -139,19 +139,19 @@ void setup()
   /* FreeRTOS */
 
   // Create Mutex //
-  xMutex = xSemaphoreCreateMutex();
+  xMutex = xSemaphoreCreateMutex();       // Task Mutex creation
   // Create Binary Semaphores //
-  xBinSem = xSemaphoreCreateBinary();
-  xButtonSem = xSemaphoreCreateBinary();
+  xBinSem = xSemaphoreCreateBinary();     // Binary semaphore for Task 6
+  xButtonSem = xSemaphoreCreateBinary();  // Binary semaphore for Task 7
 
   // FreeRTOS Task Create //
-  xTaskCreatePinnedToCore(DigitalSignal_1, "Task1", xTask1Stack, NULL, xTask1Priority, &Task1, app_cpu); // Create Task 1 on acceptible core
-  xTaskCreatePinnedToCore(DigitalSignal_2, "Task2", xTask2Stack, NULL, xTask2Priority, &Task2, app_cpu); // Create Task 2 on acceptible core
-  xTaskCreatePinnedToCore(ReadSignal_1, "Task3", xTask3Stack, NULL, xTask3Priority, &Task3, app_cpu);    // Create Task 3 on acceptible core
-  xTaskCreatePinnedToCore(ReadSignal_2, "Task4", xTask4Stack, NULL, xTask4Priority, &Task4, app_cpu);    // Create Task 4 on acceptible core
-  xTaskCreatePinnedToCore(CallDoWork, "Task5", xTask5Stack, NULL, xTask5Priority, &Task5, app_cpu);      // Create Task 5 on acceptible core
-  xTaskCreatePinnedToCore(Freq1Freq2, "Task6", xTask6Stack, NULL, xTask6Priority, &Task6, app_cpu);      // Create Task 6 on acceptible core
-  xTaskCreatePinnedToCore(ButtonDoWork, "Task7", xTask7Stack, NULL, xTask7Priority, &Task7, app_cpu);    // Create Task 7 on acceptible core
+  xTaskCreatePinnedToCore(DigitalSignal_1, "Task1", xTask1Stack, NULL, xTask1Priority, &Task1, app_cpu); // Create Task 1 on acceptable core
+  xTaskCreatePinnedToCore(DigitalSignal_2, "Task2", xTask2Stack, NULL, xTask2Priority, &Task2, app_cpu); // Create Task 2 on acceptable core
+  xTaskCreatePinnedToCore(ReadSignal_1, "Task3", xTask3Stack, NULL, xTask3Priority, &Task3, app_cpu);    // Create Task 3 on acceptable core
+  xTaskCreatePinnedToCore(ReadSignal_2, "Task4", xTask4Stack, NULL, xTask4Priority, &Task4, app_cpu);    // Create Task 4 on acceptable core
+  xTaskCreatePinnedToCore(CallDoWork, "Task5", xTask5Stack, NULL, xTask5Priority, &Task5, app_cpu);      // Create Task 5 on acceptable core
+  xTaskCreatePinnedToCore(Freq1Freq2, "Task6", xTask6Stack, NULL, xTask6Priority, &Task6, app_cpu);      // Create Task 6 on acceptable core
+  xTaskCreatePinnedToCore(ButtonDoWork, "Task7", xTask7Stack, NULL, xTask7Priority, &Task7, app_cpu);    // Create Task 7 on acceptable core
 
 
   /* B31DG Monitor */
@@ -406,8 +406,8 @@ void ButtonDoWork(void *pvParamters)
       /* Main Task */
 
       toggleLED = !toggleLED;                              // Change state of toggle
-      digitalWrite(ORANGELED, toggleLED);                  // Acitvate/Deactivate LED depending on state of toggle
       monitor.doWork();                                    // Call doWork()
+      digitalWrite(ORANGELED, toggleLED);                  // Acitvate/Deactivate LED depending on state of toggle
       Serial.println("BUTTON PRESSED: Do Work Finished!");
 
       /* Main Task End */

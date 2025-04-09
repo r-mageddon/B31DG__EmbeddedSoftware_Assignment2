@@ -20,14 +20,14 @@
 B31DGCyclicExecutiveMonitor monitor;
 
 /* Function call */
-void DigitalSignal_1();
-void DigitalSignal_2();
-void ReadSignal_1();
-void ReadSignal_2();
-void CallDoWork();
-void ButtonDoWork();
-void Freq1Freq2();
-void TickerTasks();
+void DigitalSignal_1();          // Task 1
+void DigitalSignal_2();          // Task 2
+void ReadSignal_1();             // Task 3
+void ReadSignal_2();             // Task 4
+void CallDoWork();               // Task 5
+void ButtonDoWork();             // Task 6
+void Freq1Freq2();               // Task 7
+void TickerTasks();              // Ticker Function
 
 /* Pin Definitions */
 #define GREENLED 6               // Green LED PIN
@@ -185,6 +185,7 @@ void TickerTasks()
 }
 /* End Ticker Function */
 
+
 //////////////////////////////////////
 /////////// Task 1 Function //////////
 //////////////////////////////////////
@@ -210,6 +211,7 @@ void DigitalSignal_1()
   monitor.jobEnded(1);          // End task 1 monitor
 }
 /* End Task 1 Function */
+
 
 //////////////////////////////////////
 /////////// Task 2 Function //////////
@@ -237,6 +239,7 @@ void DigitalSignal_2()
 }
 /* End Task 2 Function */
 
+
 //////////////////////////////////////
 /////////// Task 3 Function //////////
 //////////////////////////////////////
@@ -258,6 +261,7 @@ void ReadSignal_1()
 }
 /* End Task 3 Function */
 
+
 //////////////////////////////////////
 /////////// Task 4 Function //////////
 //////////////////////////////////////
@@ -278,6 +282,7 @@ void ReadSignal_2()
   monitor.jobEnded(4);                 // End task 4 monitor
 }
 /* End Task 4 Function */
+
 
 //////////////////////////////////////
 ////////// Task 5 Function ///////////
@@ -322,6 +327,7 @@ void Freq1Freq2()
 }
 /* End Task 6 Function */
 
+
 //////////////////////////////////////
 ////////// Task 7 Function ///////////
 //////////////////////////////////////
@@ -334,8 +340,8 @@ void ButtonDoWork()
   if (digitalRead(DoWorkReadButton) == HIGH)
   {
     toggleLED = !toggleLED;                              // Change state of toggle
-    digitalWrite(ORANGELED, toggleLED);                  // Acitvate/Deactivate LED depending on state of toggle
     monitor.doWork();                                    // Call doWork()
+    digitalWrite(ORANGELED, toggleLED);                  // Acitvate/Deactivate LED depending on state of toggle
     Serial.println("BUTTON PRESSED: Do Work Finished!"); // Show do work has been done
   }
 
